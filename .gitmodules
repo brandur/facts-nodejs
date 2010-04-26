@@ -1,0 +1,6 @@
+[submodule "support/express"]
+	path = support/express
+	url = http://github.com/visionmedia/express.git
+[submodule "support/redis-node-client"]
+	path = support/redis-node-client
+	url = http://github.com/fictorial/redis-node-client.git

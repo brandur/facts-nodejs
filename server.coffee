@@ -1,7 +1,9 @@
-kiwi: require "kiwi"
+require.paths.unshift "./support/express/lib"
+require.paths.unshift "./support/redis-node-client/lib"
+
+require "express"
 redis: require "./lib/redis"
 sys: require "sys"
-kiwi.require "express"
 
 Category: require("./models/category").Category
 

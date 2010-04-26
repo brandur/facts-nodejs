@@ -1,5 +1,4 @@
-kiwi: require "kiwi"
-redisclient: kiwi.require "redis-client"
+redisclient: require "redis-client"
 
 redisClient: null
 
