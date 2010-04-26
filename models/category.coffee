@@ -1,13 +1,14 @@
-s: require "../lib/slug"
-u: require "../lib/uuid"
+slug: require "../lib/slug"
+uuid: require "../lib/uuid"
 
 class exports.Category
+
     constructor: (name) ->
         @name: name
-        @slug: s.toSlug name
+        @slug: slug.make name
 
     insert: (client, callback) ->
-        @key: u.uuid()
+        @key: uuid.make()
         client.setnx "category:" + @slug + ":key", @key, (err, reply) => 
             if err then return callback(err)
             if reply is 0 

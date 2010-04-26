@@ -1,16 +1,24 @@
-c: require "./models/category"
 kiwi: require "kiwi"
 redis: require "./lib/redis"
 sys: require "sys"
 kiwi.require "express"
 
-hello: ->
-    process.addListener "uncaughtException", (err) ->
-        sys.error "Caught exception: " + err
+Category: require("./models/category").Category
+
+#
+# Configuration
+#
 
 configure ->
     /* required so that Express can find our views */
     set "root", __dirname
+
+process.addListener "uncaughtException", (err) ->
+    sys.error "Caught exception: " + err
+
+#
+# Routes
+#
 
 get "/*.css", (file) ->
     this.render file + ".css.sass", { layout: false }
@@ -23,17 +31,16 @@ get "/category", ->
     }
 
 post "/category", ->
-    name: this.param "name"
-    if not name then throw Error("need name parameter")
+    name: checkParam(this, "name")
     client: redis.client()
-    category: new c.Category(name)
+    category: new Category(name)
     category.insert client, (err) =>
-        if err then throw new Error(err)
-        @contentType "text/plain"
+        if err then return respondWithError(this, err)
+        @contentType "text"
         @halt 200, category.toJSON()
 
 get "/user/:id", (id) ->
-    this.render "user.html.haml", {
+    @render "user.html.haml", {
         locals: {
             title: "User: " + id, 
             user: id, 
@@ -41,6 +48,19 @@ get "/user/:id", (id) ->
             uuid: uuid()
         }
     }
+
+#
+# Helpers
+#
+
+checkParam: (express, name) ->
+    if not express.param(name) 
+        respondWithError(express, "need parameter '" + name + "'")
+    express.param(name)
+
+respondWithError: (express, err) ->
+    express.contentType "text"
+    express.halt 500, JSON.encode { "err": err.message }
 
 run 5678
 
