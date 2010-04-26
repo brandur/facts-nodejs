@@ -25,13 +25,12 @@ get "/category", ->
 post "/category", ->
     name: this.param "name"
     if not name then throw Error("need name parameter")
-    self: this
     client: redis.client()
     category: new c.Category(name)
-    category.insert client, (err) ->
+    category.insert client, (err) =>
         if err then throw new Error(err)
-        self.contentType "application/json"
-        self.halt 200, category.toJSON()
+        @contentType "application/json"
+        @halt 200, category.toJSON()
 
 get "/user/:id", (id) ->
     this.render "user.html.haml", {
