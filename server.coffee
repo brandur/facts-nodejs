@@ -29,7 +29,7 @@ post "/category", ->
     category: new c.Category(name)
     category.insert client, (err) =>
         if err then throw new Error(err)
-        @contentType "application/json"
+        @contentType "text/plain"
         @halt 200, category.toJSON()
 
 get "/user/:id", (id) ->
