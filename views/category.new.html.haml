@@ -1,0 +1,9 @@
+%form{ method: "post" }
+  %input{ type: 'hidden', name: '_method', value: 'put' }
+  %fieldset
+    %ul
+      %li
+        %label{ for: "name" } Name:
+        %input{ type: 'text', name: 'name' }
+      %li
+        %input{ type: 'submit', value: 'Create' }
