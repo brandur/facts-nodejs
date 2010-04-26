@@ -1,6 +1,8 @@
 require "../lib/slug"
 require "../lib/uuid"
 
+exports.Category: Category
+
 class Category
     constructor: (name) ->
         @name: name
@@ -16,5 +18,12 @@ class Category
                 if err then return callback(err)
                 client.sadd "category:all", key, (err, reply) ->
                     if err then return callback(err)
-                    callback null
+                    callback(null)
+
+    toJSON: ->
+        JSON.encode {
+            key: @key, 
+            name: @name, 
+            slug: @slug
+        }
 

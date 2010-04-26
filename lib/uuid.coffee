@@ -1,6 +1,6 @@
 # Stolen from http://www.broofa.com/Tools/Math.uuid.js
 CHARS = "0123456789abcdef".split("")
-uuid: ->
+exports.uuid: ->
     chars: CHARS
     uuid: new Array(36)
     rnd: 0

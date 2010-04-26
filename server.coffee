@@ -25,22 +25,12 @@ post "/category", ->
     name: this.param "name"
     if not name then throw Error("need name parameter")
     self: this
-    slug: toSlug name
-    key: uuid()
     client: redis.client()
-    client.setnx "category:" + slug + ":key", key, (err, reply) ->
+    category: new Category(name)
+    category.insert client, (err) ->
         if err then throw new Error(err)
-        if reply is 0 then throw new Error("category already exists")
-        client.mset "category:" + key + ":name", name, "category:" + key + ":slug", slug, (err, reply) ->
-            if err then throw new Error(err)
-            client.sadd "category:all", key, (err, reply) ->
-                if err then throw new Error(err)
-                self.contentType "text/json"
-                self.halt 200, JSON.encode {
-                    key: key, 
-                    name: name, 
-                    slug: slug
-                }
+        self.contentType "text/json"
+        self.halt 200, category.toJSON()
 
 get "/user/:id", (id) ->
     this.render "user.html.haml", {
