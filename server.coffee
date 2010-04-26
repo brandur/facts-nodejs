@@ -1,11 +1,12 @@
-require "./models/category"
+c: require "./models/category"
 kiwi: require "kiwi"
 redis: require "./lib/redis"
 sys: require "sys"
 kiwi.require "express"
 
-process.addListener "uncaughtException", (err) ->
-    sys.error "Caught exception: " + err
+hello: ->
+    process.addListener "uncaughtException", (err) ->
+        sys.error "Caught exception: " + err
 
 configure ->
     /* required so that Express can find our views */
@@ -26,10 +27,10 @@ post "/category", ->
     if not name then throw Error("need name parameter")
     self: this
     client: redis.client()
-    category: new Category(name)
+    category: new c.Category(name)
     category.insert client, (err) ->
         if err then throw new Error(err)
-        self.contentType "text/json"
+        self.contentType "application/json"
         self.halt 200, category.toJSON()
 
 get "/user/:id", (id) ->
