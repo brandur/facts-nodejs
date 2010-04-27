@@ -28,17 +28,17 @@ get "/*.css", (file) ->
 
 get "/category", ->
     Category.all redis.client(), (err, categories) =>
-        if err then return respondWithError(this, err)
+        if err then return respondWithError this, err
         @contentType "text"
         @respond 200, JSON.encode categories
 
 post "/category", ->
-    name: checkParam(this, "name")
-    category: new Category(name)
+    name: checkParam this, "name"
+    category: new Category name
     category.insert redis.client(), (err) =>
-        if err then return respondWithError(this, err)
+        if err then return respondWithError this, err
         @contentType "text"
-        @respond 200, category.toJSON()
+        @respond 200, JSON.encode category
 
 get "/category/new", ->
     this.render "category.new.html.haml", {
@@ -52,8 +52,8 @@ get "/category/new", ->
 #
 
 checkParam: (express, name) ->
-    if not express.param(name) 
-        respondWithError(express, "need parameter '" + name + "'")
+    if not express.param name
+        respondWithError express, "need parameter '" + name + "'"
     express.param(name)
 
 respondWithError: (express, err) ->
