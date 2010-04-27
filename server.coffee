@@ -2,8 +2,9 @@ require.paths.unshift "./support/express/lib"
 require.paths.unshift "./support/redis-node-client/lib"
 
 require "express"
+
 redis: require "./lib/redis"
-sys: require "sys"
+sys:   require "sys"
 
 Category: require("./models/category").Category
 
@@ -26,28 +27,23 @@ get "/*.css", (file) ->
     this.render file + ".css.sass", { layout: false }
 
 get "/category", ->
-    this.render "category.new.html.haml", {
-        locals: {
-            title: 'New Category'
-        }
-    }
+    Category.all redis.client(), (err, categories) =>
+        if err then return respondWithError(this, err)
+        @contentType "text"
+        @respond 200, JSON.encode categories
 
 post "/category", ->
     name: checkParam(this, "name")
-    client: redis.client()
     category: new Category(name)
-    category.insert client, (err) =>
+    category.insert redis.client(), (err) =>
         if err then return respondWithError(this, err)
         @contentType "text"
-        @halt 200, category.toJSON()
+        @respond 200, category.toJSON()
 
-get "/user/:id", (id) ->
-    @render "user.html.haml", {
+get "/category/new", ->
+    this.render "category.new.html.haml", {
         locals: {
-            title: "User: " + id, 
-            user: id, 
-            slugstr: toSlug(id)
-            uuid: uuid()
+            title: 'New Category'
         }
     }
 
@@ -62,7 +58,7 @@ checkParam: (express, name) ->
 
 respondWithError: (express, err) ->
     express.contentType "text"
-    express.halt 500, JSON.encode { "err": err.message }
+    express.respond 500, JSON.encode { "err": err.message }
 
 run 5678
 
