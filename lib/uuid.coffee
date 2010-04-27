@@ -4,7 +4,7 @@ exports.make: ->
     chars: CHARS
     uuid: new Array(36)
     rnd: 0
-    for i in [0..36]
+    for i in [0..35]
         switch i
             when 8, 13, 18, 23
                 uuid[i]: '-'
