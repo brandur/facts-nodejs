@@ -1,5 +1,7 @@
-slug: require "../lib/slug"
-uuid: require "../lib/uuid"
+model: require "../lib/model"
+redis: require "../lib/redis"
+slug:  require "../lib/slug"
+uuid:  require "../lib/uuid"
 
 sys:  require "sys"
 
@@ -14,24 +16,22 @@ class exports.Category
             if err then return callback err
             if reply is 0 
                 return callback new Error("category already exists")
-            client.mset(
-                "category:" + @key + ":name", @name, 
-                "category:" + @key + ":slug", @slug, 
-                "category:" + @key + ":parent", @parent, 
-                (err, reply) => 
+            model.save client, "category", @serialize(), (err, reply) =>
+                if err then return callback err
+                client.sadd "category:all", @key, (err, reply) ->
                     if err then return callback err
-                    client.sadd "category:all", @key, (err, reply) ->
-                        if err then return callback err
-                        callback null
-            )
+                    callback null
 
-    toJSON: ->
+    serialize: ->
         {
             key: @key
             name: @name
             slug: @slug
             parent: @parent
         }
+
+    toJSON: ->
+        @serialize()
 
     @all: (client, callback) ->
         client.smembers "category:all", (err, keys) ->
@@ -51,7 +51,7 @@ class exports.Category
             args.push "category:" + k + ":name"
             args.push "category:" + k + ":slug"
             args.push "category:" + k + ":parent"
-        sendCommand client, "mget", args, (err, reply) ->
+        redis.command client, "mget", args, (err, reply) ->
             if err then return callback err, null
             categories = []
             for i in [0...keys.length]
@@ -68,7 +68,7 @@ class exports.Category
             if err then return callback err, null
             if not keys then return callback null, []
             # hopefully we won't have to split() on this in the future
-            sendCommand client, "mget", keys.toString().split(" "), (err, keys2) ->
+            redis.command client, "mget", keys.toString().split(" "), (err, keys2) ->
                 if err then return callback err, null
                 exports.Category.findByKeys client, (k.toString() for k in keys2), (err, categories) ->
                     if err then return callback err, null
@@ -81,7 +81,4 @@ class exports.Category
         category.children: {}
         category.parent: null
         category
-
-sendCommand: (client, command, args, callback) ->
-    client.sendCommand.apply client, [ command ].concat(args, [ callback ])
 

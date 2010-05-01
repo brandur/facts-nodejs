@@ -8,3 +8,6 @@ exports.client: ->
         redisClient.noReconnect = true
     return redisClient
 
+exports.command: (client, command, args, callback) ->
+    client.sendCommand.apply client, [ command ].concat(args, [ callback ])
+
