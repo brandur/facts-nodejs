@@ -34,7 +34,7 @@ get "/category", ->
 
 post "/category", ->
     name: checkParam this, "name"
-    category: new Category name
+    category: Category.make name
     category.insert redis.client(), (err) =>
         if err then return respondWithError this, err
         @contentType "text"
@@ -46,6 +46,12 @@ get "/category/new", ->
             title: 'New Category'
         }
     }
+
+get "/category/search/:name", (name) ->
+    Category.findByPartialName redis.client(), name, (err, categories) =>
+        if err then return respondWithError this, err
+        @contentType "text"
+        @respond 200, JSON.encode categories
 
 #
 # Helpers
