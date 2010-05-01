@@ -12,11 +12,11 @@ class exports.Category
 
     insert: (client, callback) ->
         @key: uuid.make()
-        client.setnx "category:" + @slug + ":key", @key, (err, reply) => 
+        client.setnx "category:" + @slug + ":key", @key, (err, reply) -> 
             if err then return callback err
             if reply is 0 
-                return callback new Error("category already exists")
-            model.save client, "category", @serialize(), (err, reply) =>
+                return callback new Error("category with that slug already exists")
+            model.save client, "category", @serialize(), (err, reply) ->
                 if err then return callback err
                 client.sadd "category:all", @key, (err, reply) ->
                     if err then return callback err
@@ -40,30 +40,19 @@ class exports.Category
                 if err then return callback err, null
                 callback null, categories
 
+    @fields: ->
+        ["name", "slug", "parent"]
+
     @findByKey: (client, key, callback) ->
-        exports.Category.findByKeys client, [ key ], (err, categories) ->
+        exports.Category.findByKeys client, [key], (err, categories) ->
             if err then return callback err, null
             callback null, categories[0]
 
     @findByKeys: (client, keys, callback) ->
-        args = []
-        for k in keys
-            args.push "category:" + k + ":name"
-            args.push "category:" + k + ":slug"
-            args.push "category:" + k + ":parent"
-        redis.command client, "mget", args, (err, reply) ->
-            if err then return callback err, null
-            categories = []
-            for i in [0...keys.length]
-                c: new exports.Category()
-                c.key:    keys[i]
-                c.name:   reply[i * 3]?.toString()
-                c.slug:   reply[i * 3 + 1]?.toString()
-                c.parent: reply[i * 3 + 2]?.toString()
-                categories.push c
-            callback null, categories
+        model.load client, "category", @fields(), keys, (-> new exports.Category()), callback
 
     @findByPartialName: (client, name, callback) ->
+        # Redis treats '*' as a wildcard, this is our only tool for searching
         client.keys "category:*" + name + "*:key", (err, keys) ->
             if err then return callback err, null
             if not keys then return callback null, []
@@ -78,7 +67,5 @@ class exports.Category
         category = new exports.Category()
         category.name: name
         category.slug: slug.make name
-        category.children: {}
-        category.parent: null
         category
 
