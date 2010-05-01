@@ -24,7 +24,7 @@ process.addListener "uncaughtException", (err) ->
 #
 
 get "/*.css", (file) ->
-    this.render file + ".css.sass", { layout: false }
+    @render file + ".css.sass", { layout: false }
 
 get "/category", ->
     Category.all redis.client(), (err, categories) =>
