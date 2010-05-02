@@ -2,7 +2,9 @@ require.paths.unshift "./support/express/lib"
 require.paths.unshift "./support/redis-node-client/lib"
 
 require "express"
+require "express/plugins"
 
+path:  require "path"
 redis: require "./lib/redis"
 sys:   require "sys"
 
@@ -15,6 +17,7 @@ Category: require("./models/category").Category
 configure ->
     /* required so that Express can find our views */
     set "root", __dirname
+    use Static
 
 process.addListener "uncaughtException", (err) ->
     sys.error "Caught exception: " + err
@@ -23,8 +26,12 @@ process.addListener "uncaughtException", (err) ->
 # Routes
 #
 
-get "/*.css", (file) ->
-    @render file + ".css.sass", { layout: false }
+get "/public/css/*.css", (file) ->
+    path.exists __dirname + @url.pathname, (exists) =>
+        if exists 
+            @sendfile __dirname + @url.pathname 
+        else 
+            @render file + ".css.sass", { layout: no }
 
 get "/category", ->
     Category.all redis.client(), (err, categories) =>
@@ -47,6 +54,15 @@ get "/category/new", ->
         }
     }
 
+get "/category/search", ->
+    name: checkParam this, "q"
+    #limit: checkParam this, "limit"
+    Category.findByPartialName redis.client(), name, (err, categories) =>
+        if err then return respondWithError this, err
+        @contentType "text"
+        # jquery.autocomplete only supports this ghetto table format for now
+        @respond 200, (c.key + "|" + c.name for c in categories).join("\n")
+
 get "/category/search/:name", (name) ->
     Category.findByPartialName redis.client(), name, (err, categories) =>
         if err then return respondWithError this, err
@@ -64,7 +80,7 @@ checkParam: (express, name) ->
 
 respondWithError: (express, err) ->
     express.contentType "text"
-    express.respond 500, JSON.encode { "err": err.message }
+    express.respond 200, JSON.encode { "err": err.message }
 
 run 5678
 

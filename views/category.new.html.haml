@@ -1,12 +1,14 @@
-%form{ method: "post", action: "/category" }
+%form{ method: "post", action: "/category", id: 'category_form' }
   %input{ type: 'hidden', name: '_method', value: 'put' }
   %fieldset
     %ul
       %li
         %label{ for: "name" } Name:
-        %input{ type: 'text', name: 'name' }
+        %input{ type: 'text', name: 'name', class: 'text_input' }
       %li
         %label{ for: "parent" } Parent:
-        %input{ type: 'text', name: 'parent' }
+        %input{ type: 'text', name: 'parent', id: 'parent_name', class: 'text_input' }
       %li
         %input{ type: 'submit', value: 'Create' }
+
+#new_result= "result goes here"

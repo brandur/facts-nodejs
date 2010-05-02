@@ -12,11 +12,11 @@ class exports.Category
 
     insert: (client, callback) ->
         @key: uuid.make()
-        client.setnx "category:" + @slug + ":key", @key, (err, reply) -> 
+        client.setnx "category:" + @slug + ":key", @key, (err, reply) => 
             if err then return callback err
             if reply is 0 
                 return callback new Error("category with that slug already exists")
-            model.save client, "category", @serialize(), (err, reply) ->
+            model.save client, "category", @serialize(), (err, reply) =>
                 if err then return callback err
                 client.sadd "category:all", @key, (err, reply) ->
                     if err then return callback err

@@ -23,8 +23,8 @@ exports.load: (client, type, fields, keys, newFunc, callback) ->
 exports.save: (client, type, fields, callback) ->
     args = []
     for k, v of fields
-        sys.puts "k:" + k + " v:" + v
-        if k isnt "key" and v isnt null
+        #sys.puts "k:" + k + " v:" + v
+        if k isnt "key" and v isnt undefined
             args.push [type, fields.key, k].join(":")
             args.push v
     redis.command client, "mset", args, callback
