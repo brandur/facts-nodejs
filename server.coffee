@@ -19,8 +19,9 @@ configure ->
     set "root", __dirname
     use Static
 
-process.addListener "uncaughtException", (err) ->
-    sys.error "Caught exception: " + err
+comment: ->
+    process.addListener "uncaughtException", (err) ->
+        sys.error "Caught exception: " + err
 
 #
 # Routes
@@ -56,15 +57,15 @@ get "/category/new", ->
 
 get "/category/search", ->
     name: checkParam this, "q"
-    #limit: checkParam this, "limit"
-    Category.findByPartialName redis.client(), name, (err, categories) =>
+    limit: checkParam this, "limit" or -1
+    Category.findByPartialName redis.client(), name, limit, (err, categories) =>
         if err then return respondWithError this, err
         @contentType "text"
         # jquery.autocomplete only supports this ghetto table format for now
         @respond 200, (c.key + "|" + c.name for c in categories).join("\n")
 
 get "/category/search/:name", (name) ->
-    Category.findByPartialName redis.client(), name, (err, categories) =>
+    Category.findByPartialName redis.client(), name, -1, (err, categories) =>
         if err then return respondWithError this, err
         @contentType "text"
         @respond 200, JSON.encode categories

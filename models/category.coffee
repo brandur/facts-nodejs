@@ -51,13 +51,16 @@ class exports.Category
     @findByKeys: (client, keys, callback) ->
         model.load client, "category", @fields(), keys, (-> new exports.Category()), callback
 
-    @findByPartialName: (client, name, callback) ->
+    @findByPartialName: (client, name, limit, callback) ->
         # Redis treats '*' as a wildcard, this is our only tool for searching
         client.keys "category:*" + name + "*:key", (err, keys) ->
             if err then return callback err, null
             if not keys then return callback null, []
             # hopefully we won't have to split() on this in the future
-            redis.command client, "mget", keys.toString().split(" "), (err, keys2) ->
+            keys = keys.toString().split(" ")
+            if limit > 0 and keys.length > limit
+                keys = keys.slice(0, limit)
+            redis.command client, "mget", keys, (err, keys2) ->
                 if err then return callback err, null
                 exports.Category.findByKeys client, (k.toString() for k in keys2), (err, categories) ->
                     if err then return callback err, null
