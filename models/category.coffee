@@ -13,14 +13,22 @@ class exports.Category
     insert: (client, callback) ->
         @key: uuid.make()
         client.setnx "category:" + @slug + ":key", @key, (err, reply) => 
-            if err then return callback err
-            if reply is 0 
-                return callback new Error("category with that slug already exists")
-            model.save client, "category", @serialize(), (err, reply) =>
+            save: => model.save client, "category", @serialize(), (err, reply) =>
                 if err then return callback err
                 client.sadd "category:all", @key, (err, reply) ->
                     if err then return callback err
                     callback null
+            if err then return callback err
+            if reply is 0 
+                return callback new Error("category with that slug already exists")
+            if not @parent
+                save()
+            else
+                exports.Category.exists client, @parent, (err, exists) =>
+                    if err then return callback err
+                    if not exists 
+                        return callback "parent key '$@parent' does not exist"
+                    save()
 
     serialize: ->
         {
@@ -39,6 +47,11 @@ class exports.Category
             exports.Category.findByKeys client, (k.toString() for k in keys), (err, categories) ->
                 if err then return callback err, null
                 callback null, categories
+
+    @exists: (client, key, callback) ->
+        client.get ["category", key, "name"].join(":"), (err, reply) ->
+            if err then return callback err, null
+            callback null, reply isnt null
 
     @fields: ->
         ["name", "slug", "parent"]

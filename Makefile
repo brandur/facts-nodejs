@@ -15,3 +15,6 @@ js : $(jss)
 node : js
 	node server.js
 
+tests: js
+	node tests/all.js
+
