@@ -39,8 +39,8 @@ testCategoryInsertWithBadParent: (client, callback) ->
         callback()
 
 exports.categoryTests: [
-    testCategoryExists
     testCategoryInsert
+    testCategoryExists
     testCategoryInsertWithParent
     testCategoryInsertWithBadParent
 ]

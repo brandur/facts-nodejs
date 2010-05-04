@@ -36,17 +36,27 @@ get "/public/css/*.css", (file) ->
 
 get "/category", ->
     Category.all redis.client(), (err, categories) =>
-        if err then return respondWithError this, err
-        @contentType "text"
-        @respond 200, JSON.encode categories
+        respondWithJSON this, -> 
+            if err then error err else categories
 
 post "/category", ->
-    name: checkParam this, "name"
+    insert: =>
+        category.insert redis.client(), (err) =>
+            respondWithJSON this, ->
+                if err then error err else category
+    name: @param "name"
+    if not name then return respondWithError this, "need parameter 'name'"
+    parentName: @param "parent_name"
     category: Category.make name
-    category.insert redis.client(), (err) =>
-        if err then return respondWithError this, err
-        @contentType "text"
-        @respond 200, JSON.encode category
+    if not parentName
+        insert()
+    else
+        Category.findByName redis.client(), parentName, (err, parent) =>
+            if err then return respondWithJSON this, -> error err
+            if not parent then return respondWithJSON this, -> 
+                error "no such parent category"
+            category.parent = parent.key
+            insert()
 
 get "/category/new", ->
     this.render "category.new.html.haml", {
@@ -56,32 +66,32 @@ get "/category/new", ->
     }
 
 get "/category/search", ->
-    name: checkParam this, "q"
-    limit: checkParam this, "limit" or -1
+    name: @param "q"
+    if not name then return @respond 500, "need parameter 'q'"
+    limit: @param(name) or -1
     Category.findByPartialName redis.client(), name, limit, (err, categories) =>
-        if err then return respondWithError this, err
+        if err then return respond 500, err
         @contentType "text"
-        # jquery.autocomplete only supports this ghetto table format for now
-        @respond 200, (c.key + "|" + c.name for c in categories).join("\n")
+        @respond 200, (c.name for c in categories).join("\n")
 
 get "/category/search/:name", (name) ->
     Category.findByPartialName redis.client(), name, -1, (err, categories) =>
-        if err then return respondWithError this, err
-        @contentType "text"
-        @respond 200, JSON.encode categories
+        respondWithJSON this, ->
+            if err then error err else categories
 
 #
 # Helpers
 #
 
-checkParam: (express, name) ->
-    if not express.param name
-        respondWithError express, "need parameter '" + name + "'"
-    express.param(name)
+error: (err) ->
+    { "err": err }
 
-respondWithError: (express, err) ->
+respondWithError: (express, msg) ->
+    respondWithJSON express, -> error msg
+
+respondWithJSON: (express, callback) ->
     express.contentType "text"
-    express.respond 200, JSON.encode { "err": err.message }
+    express.respond 200, JSON.encode callback()
 
 run 5678
 
