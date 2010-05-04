@@ -19,9 +19,8 @@ configure ->
     set "root", __dirname
     use Static
 
-comment: ->
-    process.addListener "uncaughtException", (err) ->
-        sys.error "Caught exception: " + err
+process.addListener "uncaughtException", (err) ->
+    sys.error "Caught exception: " + err
 
 #
 # Routes
@@ -84,10 +83,10 @@ get "/category/search/:name", (name) ->
 #
 
 error: (err) ->
-    { "err": err }
+    { "err": err.message }
 
 respondWithError: (express, msg) ->
-    respondWithJSON express, -> error msg
+    respondWithJSON express, -> error new Error(msg)
 
 respondWithJSON: (express, callback) ->
     express.contentType "text"

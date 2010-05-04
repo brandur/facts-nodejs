@@ -14,6 +14,8 @@ class exports.Category
         @key: uuid.make()
         client.setnx "category:slug:$@slug:key", @key, (err, reply) => 
             if err then return callback err
+            if reply is 0 
+                return callback new Error("category with that slug already exists")
             client.set "category:name:$@name:key", @key, (err, reply) =>
                 save: => model.save client, "category", @serialize(), (err, reply) =>
                     if err then return callback err
@@ -21,8 +23,6 @@ class exports.Category
                         if err then return callback err
                         callback null
                 if err then return callback err
-                if reply is 0 
-                    return callback new Error("category with that slug already exists")
                 if not @parent
                     save()
                 else

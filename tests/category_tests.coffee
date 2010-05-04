@@ -21,6 +21,15 @@ testCategoryInsert: (client, callback) ->
         assert.ok category.key isnt undefined
         callback()
 
+testCategoryInsertDuplicate: (client, callback) ->
+    category = Category.make "science"
+    category.insert client, (err) ->
+        assert.ok not err
+        category2 = Category.make "science"
+        category2.insert client, (err) ->
+            assert.ok err isnt null
+            callback()
+
 testCategoryInsertWithParent: (client, callback) ->
     parent = Category.make "science"
     parent.insert client, (err) ->
@@ -40,6 +49,7 @@ testCategoryInsertWithBadParent: (client, callback) ->
 
 exports.categoryTests: [
     testCategoryInsert
+    testCategoryInsertDuplicate
     testCategoryExists
     testCategoryInsertWithParent
     testCategoryInsertWithBadParent
