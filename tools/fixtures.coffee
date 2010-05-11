@@ -9,10 +9,10 @@ Category: require("../models/category").Category
 level: 0
 
 addCategories: (client, categories, parent, callback) ->
-    if categories.length < 1 then return callback()
-    category = categories[0]
+    category = categories.shift()
+    if not category then return callback()
     addCategory client, category, parent, =>
-        addCategories client, categories[1...categories.length], parent, =>
+        addCategories client, categories, parent, =>
             callback()
 
 addCategory: (client, category, parent, callback) ->
