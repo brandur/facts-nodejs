@@ -36,7 +36,7 @@ get "/public/css/*.css", (file) ->
             @render file + ".css.sass", { layout: no }
 
 get "/category", ->
-    Category.root redis.client(), (err, categories) =>
+    Category.recursive redis.client(), (err, categories) =>
         respondWithJSON this, -> 
             if err then error err else categories
 

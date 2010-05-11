@@ -11,12 +11,6 @@ class exports.Category
     constructor: ->
         @children: []
 
-    initChildren: (client, callback) ->
-        client.smembers "category:$@key:children", (err, children) ->
-            if err then return callback err
-            @children: children
-            callback null
-
     insert: (client, callback) ->
         save: => 
             client.setnx "category:slug:$@slug:key", @key, (err, reply) => 
@@ -54,6 +48,13 @@ class exports.Category
                     @slug: reply.toString() + "/" + slug.make @name
                     save()
 
+    loadChildren: (client, callback) ->
+        if @children.length < 1 then return callback null
+        exports.Category.findByKeys client, @children, (err, categories) =>
+            if err then return callback err
+            @children = categories
+            callback null
+
     serialize: ->
         {
             key: @key
@@ -64,7 +65,9 @@ class exports.Category
         }
 
     toJSON: ->
-        @serialize()
+        o = @serialize()
+        o.children = @children
+        o
 
     @all: (client, callback) ->
         client.smembers "category:all", (err, keys) ->
@@ -88,7 +91,19 @@ class exports.Category
             callback null, categories[0]
 
     @findByKeys: (client, keys, callback) ->
-        model.load client, "category", @fields(), keys, (-> new exports.Category()), callback
+        model.load client, "category", @fields(), keys, (-> new exports.Category()), (err, categories) =>
+            loadCollections: (client, categories, result, callback) ->
+                category = categories.shift()
+                if not category then return callback null, result
+                client.smembers "category:$category.key:children", (err, children) =>
+                    if err then return callback err, null
+                    if children then category.children: c.toString() for c in children
+                    result.push category
+                    loadCollections client, categories, result, (err, categories) =>
+                        if err then return callback err, null
+                        callback null, categories
+            if err then return callback err, null
+            loadCollections client, categories, [], callback
 
     @findByName: (client, name, callback) ->
         client.get "category:name:$name:key", (err, reply) ->
@@ -129,4 +144,18 @@ class exports.Category
             exports.Category.findByKeys client, (k.toString() for k in keys), (err, categories) ->
                 if err then return callback err, null
                 callback null, categories
+
+    @recursive: (client, callback) ->
+        exports.Category.root client, (err, categories) ->
+            loadCategories: (client, categories, i, callback) ->
+                if i >= categories.length then return callback null, categories
+                category = categories[i]
+                category.loadChildren client, (err) =>
+                    if err then return callback err, null
+                    loadCategories client, category.children, 0, (err, x) =>
+                        if err then return callback err, null
+                        loadCategories client, categories, i+1, (err, categories) =>
+                            if err then return callback err, null
+                            callback null, categories
+            loadCategories client, categories, 0, callback
 
