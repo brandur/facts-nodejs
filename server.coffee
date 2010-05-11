@@ -17,6 +17,7 @@ Category: require("./models/category").Category
 configure ->
     /* required so that Express can find our views */
     set "root", __dirname
+    use MethodOverride
     use Static
 
 commented: ->
@@ -83,6 +84,11 @@ get "/category/search/:name", (name) ->
     Category.findByPartialName redis.client(), name, -1, (err, categories) =>
         respondWithJSON this, ->
             if err then error err else categories
+
+get "/category/*", (slug) ->
+    Category.findBySlug redis.client(), slug, (err, category) =>
+        respondWithJSON this, ->
+            if err then error err else category
 
 #
 # Helpers

@@ -1,6 +1,7 @@
 model: require "../lib/model"
 redis: require "../lib/redis"
 slug:  require "../lib/slug"
+time:  require "../lib/time"
 uuid:  require "../lib/uuid"
 
 sys:  require "sys"
@@ -8,7 +9,7 @@ sys:  require "sys"
 class exports.Category
 
     constructor: ->
-        @children: {}
+        @children: []
 
     initChildren: (client, callback) ->
         client.smembers "category:$@key:children", (err, children) ->
@@ -39,6 +40,7 @@ class exports.Category
                             if err then return callback err
                             save2()
         @key: uuid.make()
+        @createdAt: time.now()
         if not @parent
             @slug: slug.make @name
             save()
@@ -58,6 +60,7 @@ class exports.Category
             name: @name
             slug: @slug
             parent: @parent
+            created_at: @createdAt
         }
 
     toJSON: ->
@@ -77,7 +80,7 @@ class exports.Category
             callback null, reply isnt null
 
     @fields: ->
-        ["name", "slug", "parent"]
+        [ "name", "slug", "parent", [ "createdAt", "created_at" ] ]
 
     @findByKey: (client, key, callback) ->
         exports.Category.findByKeys client, [key], (err, categories) ->
@@ -89,6 +92,12 @@ class exports.Category
 
     @findByName: (client, name, callback) ->
         client.get "category:name:$name:key", (err, reply) ->
+           if err then return callback err, null
+           if not reply then return callback null, null
+           exports.Category.findByKey client, reply.toString(), callback
+
+    @findBySlug: (client, slug, callback) ->
+        client.get "category:slug:$slug:key", (err, reply) ->
            if err then return callback err, null
            if not reply then return callback null, null
            exports.Category.findByKey client, reply.toString(), callback

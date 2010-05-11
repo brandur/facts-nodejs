@@ -11,8 +11,8 @@ level: 0
 addCategories: (client, categories, parent, callback) ->
     if categories.length < 1 then return callback()
     category = categories[0]
-    addCategory client, category, parent, () =>
-        addCategories client, categories[1...categories.length], parent, () =>
+    addCategory client, category, parent, =>
+        addCategories client, categories[1...categories.length], parent, =>
             callback()
 
 addCategory: (client, category, parent, callback) ->
@@ -22,7 +22,7 @@ addCategory: (client, category, parent, callback) ->
         if err then throw err
         sys.puts "inserted $category2.slug"
         if category.children
-            addCategories client, category.children, category2.key, () =>
+            addCategories client, category.children, category2.key, =>
                 callback()
         else
             callback()
@@ -35,7 +35,7 @@ main: ->
     fixtures: eval data
     client: redis.client()
     sys.puts line()
-    addCategories client, fixtures.categories, null, () ->
+    addCategories client, fixtures.categories, null, ->
         sys.puts "DONE!"
         sys.puts line()
         process.exit()

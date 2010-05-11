@@ -18,6 +18,7 @@ testCategoryInsert: (client, callback) ->
     category.insert client, (err) ->
         assert.ok not err
         assert.ok category.key isnt undefined
+        assert.ok category.createdAt isnt undefined
         assert.ok category.slug isnt undefined
         callback()
 
