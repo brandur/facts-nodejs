@@ -117,7 +117,6 @@ class exports.Category
         client.smembers "category:root", (err, keys) ->
             if err then return callback err, null
             if not keys then return callback null, null
-            sys.puts keys
             exports.Category.findByKeys client, (k.toString() for k in keys), (err, categories) ->
                 if err then return callback err, null
                 callback null, categories
