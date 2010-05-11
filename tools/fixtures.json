@@ -1,0 +1,71 @@
+({
+    "categories": [
+        { "name": "art"
+        , "children": [
+            { "name": "cubism" }
+          ]
+        }, 
+        { "name": "geography"
+        , "children": [
+            { "name": "Lake Agassiz" }
+          ]
+        }, 
+        { "name": "internet"
+        , "children": [
+            { "name": "Chevrolet" }
+          ]
+        }, 
+        { "name": "language"
+        , "children": [
+            { "name": "eg vs. ie" }
+          ]
+        }, 
+        { "name": "math"
+        , "children": [
+            { "name": "Benford's Law" }
+          ]
+        }, 
+        { "name": "politics"
+        , "children": [
+            { "name": "Sabrina Guzzanti" }
+          ]
+        }, 
+        { "name": "science"
+        , "children": [
+            { "name": "astronomy"
+            , "children": [
+                { "name": "magnetar" }
+              ]
+            }, 
+            { "name": "energy"
+            , "children": [
+                { "name": "oil" }
+              ]
+            }, 
+            { "name": "mach" }, 
+            { "name": "movement" }
+          ]
+        }, 
+        { "name": "world"
+        , "children": [
+            { "name": "canada"
+            , "children": [
+                { "name": "CN Tower" }
+              ]
+            }, 
+            { "name": "dubai"
+            , "children": [
+                { "name": "Burj Dubai" }
+              ]
+            }, 
+            { "name": "russia"
+            , "children": [
+                { "name": "Kola Superdeep Borehole" }, 
+                { "name": "Perimeter" }
+              ]
+            }
+          ]
+        }
+    ]
+})
+

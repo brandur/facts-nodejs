@@ -14,11 +14,11 @@ testCategoryExists: (client, callback) ->
 
 testCategoryInsert: (client, callback) ->
     category = Category.make "science"
-    assert.ok category.slug isnt undefined
     assert.ok category.parent is undefined
     category.insert client, (err) ->
         assert.ok not err
         assert.ok category.key isnt undefined
+        assert.ok category.slug isnt undefined
         callback()
 
 testCategoryInsertDuplicate: (client, callback) ->

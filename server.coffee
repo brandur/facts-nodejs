@@ -19,8 +19,9 @@ configure ->
     set "root", __dirname
     use Static
 
-process.addListener "uncaughtException", (err) ->
-    sys.error "Caught exception: " + err
+commented: ->
+    process.addListener "uncaughtException", (err) ->
+        sys.error "Caught exception: " + err
 
 #
 # Routes
@@ -34,6 +35,11 @@ get "/public/css/*.css", (file) ->
             @render file + ".css.sass", { layout: no }
 
 get "/category", ->
+    Category.root redis.client(), (err, categories) =>
+        respondWithJSON this, -> 
+            if err then error err else categories
+
+get "/category/all", ->
     Category.all redis.client(), (err, categories) =>
         respondWithJSON this, -> 
             if err then error err else categories

@@ -9,6 +9,12 @@ clean :
 coffee : 
 	coffee server.coffee
 
+fixtures : js
+	node tools/fixtures.js
+
+flushdb : 
+	coffee tools/flushdb.coffee
+
 js : $(jss)
 	find . -name "*.coffee" -exec coffee -c {} \;
 

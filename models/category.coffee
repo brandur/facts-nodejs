@@ -10,29 +10,47 @@ class exports.Category
     constructor: ->
         @children: {}
 
-    insert: (client, callback) ->
-        @key: uuid.make()
-        client.setnx "category:slug:$@slug:key", @key, (err, reply) => 
+    initChildren: (client, callback) ->
+        client.smembers "category:$@key:children", (err, children) ->
             if err then return callback err
-            if reply is 0 
-                return callback new Error("category with that slug already exists")
-            client.set "category:name:$@name:key", @key, (err, reply) =>
-                save: => model.save client, "category", @serialize(), (err, reply) =>
-                    if err then return callback err
-                    client.sadd "category:all", @key, (err, reply) ->
-                        if err then return callback err
-                        callback null
+            @children: children
+            callback null
+
+    insert: (client, callback) ->
+        save: => 
+            client.setnx "category:slug:$@slug:key", @key, (err, reply) => 
                 if err then return callback err
-                if not @parent
-                    save()
-                else
-                    exports.Category.exists client, @parent, (err, exists) =>
+                if reply is 0 
+                    return callback new Error("category with that slug already exists")
+                client.set "category:name:$@name:key", @key, (err, reply) =>
+                    save2: => model.save client, "category", @serialize(), (err, reply) =>
                         if err then return callback err
-                        if not exists 
-                            return callback "parent key '$@parent' does not exist"
+                        client.sadd "category:all", @key, (err, reply) ->
+                            if err then return callback err
+                            callback null
+                    if err then return callback err
+                    if not @parent
+                        # Indicate that this is a root-level category
+                        client.sadd "category:root", @key, (err, reply) =>
+                            if err then return callback err
+                            save2()
+                    else
                         client.sadd "category:$@parent:children", @key, (err, reply) =>
                             if err then return callback err
-                            save()
+                            save2()
+        @key: uuid.make()
+        if not @parent
+            @slug: slug.make @name
+            save()
+        else
+            exports.Category.exists client, @parent, (err, exists) =>
+                if err then return callback err
+                if not exists 
+                    return callback "parent key '$@parent' does not exist"
+                client.get "category:$@parent:slug", (err, reply) =>
+                    if err then return callback err
+                    @slug: reply.toString() + "/" + slug.make @name
+                    save()
 
     serialize: ->
         {
@@ -48,6 +66,7 @@ class exports.Category
     @all: (client, callback) ->
         client.smembers "category:all", (err, keys) ->
             if err then return callback err, null
+            if not keys then return callback null, null
             exports.Category.findByKeys client, (k.toString() for k in keys), (err, categories) ->
                 if err then return callback err, null
                 callback null, categories
@@ -92,6 +111,14 @@ class exports.Category
     @make: (name) ->
         category = new exports.Category()
         category.name: name
-        category.slug: slug.make name
         category
+
+    @root: (client, callback) ->
+        client.smembers "category:root", (err, keys) ->
+            if err then return callback err, null
+            if not keys then return callback null, null
+            sys.puts keys
+            exports.Category.findByKeys client, (k.toString() for k in keys), (err, categories) ->
+                if err then return callback err, null
+                callback null, categories
 
