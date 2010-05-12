@@ -57,7 +57,7 @@ class Fact
     @fields: ->
         [
             "content"
-            { obj: "createdAt", datastore: "created_at" }
+            { obj: "createdAt", ds: "created_at" }
         ]
 
     toFields: ->
