@@ -26,33 +26,41 @@ class exports.Category
     #
 
     insert: (client, callback) ->
-        save: => 
+        # Step 1: initialize members for insert and generate an appropriate 
+        # slug
+        insert: =>
+            @key: uuid.make()
+            @createdAt: time.now()
+            if not @parent
+                @slug: slug.make @name
+                insertSlug()
+            else
+                exports.Category.exists client, @parent, errWrap callback, (exists) =>
+                    if not exists 
+                        return callback "parent key '$@parent' does not exist"
+                    client.get "category:$@parent:slug", errWrap callback, (reply) =>
+                        @slug: reply.toString() + "/" + slug.make @name
+                        insertSlug()
+        # Step 2: insert the slug, but fail if it's already present. Add this 
+        # category to its parent's collection or a root collection.
+        insertSlug: => 
             client.setnx "category:slug:$@slug:key", @key, errWrap callback, (reply) =>
                 if reply is 0 
                     return callback new Error "category with that slug already exists"
                 client.set "category:name:$@name:key", @key, errWrap callback, (reply) =>
-                    save2: => model.save client, "category", @toFields(), errWrap callback, (reply) =>
-                        client.sadd "category:all", @key, errWrap callback, (reply) ->
-                            callback null
                     if not @parent
                         # Indicate that this is a root-level category
                         client.sadd "category:root", @key, errWrap callback, (reply) =>
-                            save2()
+                            insertFields()
                     else
                         client.sadd "category:$@parent:children", @key, errWrap callback, (reply) =>
-                            save2()
-        @key: uuid.make()
-        @createdAt: time.now()
-        if not @parent
-            @slug: slug.make @name
-            save()
-        else
-            exports.Category.exists client, @parent, errWrap callback, (exists) =>
-                if not exists 
-                    return callback "parent key '$@parent' does not exist"
-                client.get "category:$@parent:slug", errWrap callback, (reply) =>
-                    @slug: reply.toString() + "/" + slug.make @name
-                    save()
+                            insertFields()
+        # Step 3: persist the category's fields and add it to the 'all' set
+        insertFields: => 
+            model.save client, "category", @toFields(), errWrap callback, (reply) =>
+                client.sadd "category:all", @key, errWrap callback, (reply) ->
+                    callback null
+        insert()
 
     #
     # Lazy Initialization ----
