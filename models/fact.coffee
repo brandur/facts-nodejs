@@ -69,9 +69,9 @@ class Fact
         }
 
     toJSON: ->
-        o: @toFields()
-        o.categories: @categories
-        o
+        obj: @toFields()
+        obj.categories: @categories
+        obj
 
 exports.Fact: Fact
 
