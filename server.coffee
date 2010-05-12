@@ -20,9 +20,8 @@ configure ->
     use MethodOverride
     use Static
 
-commented: ->
-    process.addListener "uncaughtException", (err) ->
-        sys.error "Caught exception: " + err
+process.addListener "uncaughtException", (err) ->
+    sys.error "Caught exception: " + err
 
 #
 # Routes
@@ -40,12 +39,7 @@ get "/category", ->
         respondWithJSON this, -> 
             if err then error err else categories
 
-get "/category/all", ->
-    Category.all redis.client(), (err, categories) =>
-        respondWithJSON this, -> 
-            if err then error err else categories
-
-post "/category", ->
+put "/category", ->
     insert: =>
         category.insert redis.client(), (err) =>
             respondWithJSON this, ->
@@ -63,6 +57,11 @@ post "/category", ->
                 error "no such parent category"
             category.parent = parent.key
             insert()
+
+get "/category/all", ->
+    Category.all redis.client(), (err, categories) =>
+        respondWithJSON this, -> 
+            if err then error err else categories
 
 get "/category/new", ->
     this.render "category.new.html.haml", {
