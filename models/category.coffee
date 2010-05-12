@@ -143,25 +143,23 @@ class Category
     @findByKeys: (client, keys, cb) ->
         # Step 1: load fields for all requested keys using a big 'mget'
         start: =>
-            model.load(client, "category", @fields(), keys, (-> new Category()), 
+            model.load client, "category", @fields(), keys, 
+                -> new Category(), 
                 errw2 cb, (categories) -> 
                     loadCollections client, categories, [], cb
-            )
         # Step 2: load member collections for every object returned in the 1st 
         # step. This function traverses each object via recursion.
         loadCollections: (client, categories, collector, cb) ->
             category: categories.shift()
             if not category then return cb null, collector
-            client.smembers("category:$category.key:children", 
+            client.smembers "category:$category.key:children", 
                 errw2 cb, (children) ->
                     if children 
                         category.children: c.toString() for c in children
                     collector.push category
-                    loadCollections(client, categories, collector, 
+                    loadCollections client, categories, collector, 
                         errw2 cb, (categories) ->
                             cb null, categories
-                    )
-            )
         start()
 
     @findByName: (client, name, cb) ->
@@ -196,8 +194,9 @@ class Category
         category: categories[i]
         category.loadChildren client, =>
             loadCategories client, category.children, 0, errw2 cb, (x) =>
-                loadCategories client, categories, i+1, errw2 cb, (categories) =>
-                    cb null, categories
+                loadCategories client, categories, i+1, 
+                    errw2 cb, (categories) =>
+                        cb null, categories
 
 exports.Category: Category
 
