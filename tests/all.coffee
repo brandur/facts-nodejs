@@ -6,8 +6,8 @@ sys:    require "sys"
 
 # Run all tests sequentially, still haven't decided for sure whether or not 
 # this is desirable, or if we should try for parallelism
-runTests: (tests, callback) ->
-    if tests.length < 1 then return callback()
+runTests: (tests, cb) ->
+    if tests.length < 1 then return cb()
     test: tests.shift()
     sys.puts "Running test: " + test.name
     client: redis.createClient()
@@ -19,13 +19,16 @@ runTests: (tests, callback) ->
             assert.ok reply, "flush test database"
             test client, ->
                 client.close()
-                runTests tests, callback
+                runTests tests, cb
 
 line: ->
     new Array(79).join("-")
 
 allTests:
-    require("./category_tests").categoryTests
+    [].concat(
+        require("./category_tests").categoryTests()
+        require("./fact_tests").factTests()
+    )
 
 sys.puts line()
 sys.puts "Running Factz test suite of $allTests.length test(s)"

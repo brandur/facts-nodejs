@@ -2,7 +2,15 @@ assert: require "assert"
 
 Category: require("../models/category").Category
 
-testCategoryExists: (client, callback) ->
+exports.categoryTests: -> [
+    testCategoryInsert
+    testCategoryInsertDuplicate
+    testCategoryExists
+    testCategoryInsertWithParent
+    testCategoryInsertWithBadParent
+]
+
+testCategoryExists: (client, cb) ->
     Category.exists client, "bad-category-key", (err, exists) ->
         assert.ok exists is false
         category = Category.make "science"
@@ -10,9 +18,9 @@ testCategoryExists: (client, callback) ->
             assert.ok not err
             Category.exists client, category.key, (err, exists) ->
                 assert.ok exists
-                callback()
+                cb()
 
-testCategoryInsert: (client, callback) ->
+testCategoryInsert: (client, cb) ->
     category = Category.make "science"
     assert.ok category.parent is undefined
     category.insert client, (err) ->
@@ -20,18 +28,18 @@ testCategoryInsert: (client, callback) ->
         assert.ok category.key isnt undefined
         assert.ok category.createdAt isnt undefined
         assert.ok category.slug isnt undefined
-        callback()
+        cb()
 
-testCategoryInsertDuplicate: (client, callback) ->
+testCategoryInsertDuplicate: (client, cb) ->
     category = Category.make "science"
     category.insert client, (err) ->
         assert.ok not err
         category2 = Category.make "science"
         category2.insert client, (err) ->
             assert.ok err isnt null
-            callback()
+            cb()
 
-testCategoryInsertWithParent: (client, callback) ->
+testCategoryInsertWithParent: (client, cb) ->
     parent = Category.make "science"
     parent.insert client, (err) ->
         assert.ok not err
@@ -39,20 +47,12 @@ testCategoryInsertWithParent: (client, callback) ->
         category.parent = parent.key
         category.insert client, (err) ->
             assert.ok not err
-            callback()
+            cb()
 
-testCategoryInsertWithBadParent: (client, callback) ->
+testCategoryInsertWithBadParent: (client, cb) ->
     category = Category.make "orphaned"
     category.parent = "bad-parent-key"
     category.insert client, (err) ->
         assert.ok err isnt null
-        callback()
-
-exports.categoryTests: [
-    testCategoryInsert
-    testCategoryInsertDuplicate
-    testCategoryExists
-    testCategoryInsertWithParent
-    testCategoryInsertWithBadParent
-]
+        cb()
 
