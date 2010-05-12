@@ -80,7 +80,12 @@ class Category
     #
 
     @fields: ->
-        [ "name", "slug", "parent", { obj: "createdAt", datastore: "created_at" } ]
+        [ 
+            "name"
+            "slug"
+            "parent"
+            { obj: "createdAt", datastore: "created_at" }
+        ]
 
     toFields: ->
         {
@@ -131,16 +136,24 @@ class Category
             callback null, categories[0]
 
     @findByKeys: (client, keys, callback) ->
-        model.load client, "category", @fields(), keys, (-> new Category()), errWrap2 callback, (categories) =>
-            loadCollections: (client, categories, result, callback) ->
-                category: categories.shift()
-                if not category then return callback null, result
-                client.smembers "category:$category.key:children", errWrap2 callback, (children) =>
-                    if children then category.children: c.toString() for c in children
-                    result.push category
-                    loadCollections client, categories, result, errWrap2 callback, (categories) =>
-                        callback null, categories
-            loadCollections client, categories, [], callback
+        # Step 1: load fields for all requested keys using a big 'mget'
+        start: =>
+            model.load(client, "category", @fields(), keys, (-> new Category()), 
+                errWrap2 callback, (categories) -> 
+                    loadCollections client, categories, [], callback
+            )
+        # Step 2: load member collections for every object returned in the 1st 
+        # step. This function traverses each object via recursion.
+        loadCollections: (client, categories, collector, callback) ->
+            category: categories.shift()
+            if not category then return callback null, collector
+            client.smembers "category:$category.key:children", errWrap2 callback, (children) ->
+                if children 
+                    category.children: c.toString() for c in children
+                collector.push category
+                loadCollections client, categories, collector, errWrap2 callback, (categories) ->
+                    callback null, categories
+        start()
 
     @findByName: (client, name, callback) ->
         client.get "category:name:$name:key", errWrap2 callback, (reply) ->
