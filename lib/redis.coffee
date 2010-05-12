@@ -2,12 +2,12 @@ redisclient: require "redis-client"
 
 redisClient: null
 
-exports.client: ->
+exports.ds: ->
     if not redisClient or not redisClient.connected
         redisClient: redisclient.createClient()
         redisClient.noReconnect = true
     return redisClient
 
-exports.command: (client, command, args, callback) ->
-    client.sendCommand.apply client, [ command ].concat(args, [ callback ])
+exports.command: (ds, command, args, cb) ->
+    ds.sendCommand.apply ds, [ command ].concat(args, [ cb ])
 

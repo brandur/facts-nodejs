@@ -10,49 +10,49 @@ exports.categoryTests: -> [
     testCategoryInsertWithBadParent
 ]
 
-testCategoryExists: (client, cb) ->
-    Category.exists client, "bad-category-key", (err, exists) ->
+testCategoryExists: (ds, cb) ->
+    Category.exists ds, "bad-category-key", (err, exists) ->
         assert.ok exists is false
         category = Category.make "science"
-        category.insert client, (err) ->
+        category.insert ds, (err) ->
             assert.ok not err
-            Category.exists client, category.key, (err, exists) ->
+            Category.exists ds, category.key, (err, exists) ->
                 assert.ok exists
                 cb()
 
-testCategoryInsert: (client, cb) ->
+testCategoryInsert: (ds, cb) ->
     category = Category.make "science"
     assert.ok category.parent is undefined
-    category.insert client, (err) ->
+    category.insert ds, (err) ->
         assert.ok not err
         assert.ok category.key isnt undefined
         assert.ok category.createdAt isnt undefined
         assert.ok category.slug isnt undefined
         cb()
 
-testCategoryInsertDuplicate: (client, cb) ->
+testCategoryInsertDuplicate: (ds, cb) ->
     category = Category.make "science"
-    category.insert client, (err) ->
+    category.insert ds, (err) ->
         assert.ok not err
         category2 = Category.make "science"
-        category2.insert client, (err) ->
+        category2.insert ds, (err) ->
             assert.ok err isnt null
             cb()
 
-testCategoryInsertWithParent: (client, cb) ->
+testCategoryInsertWithParent: (ds, cb) ->
     parent = Category.make "science"
-    parent.insert client, (err) ->
+    parent.insert ds, (err) ->
         assert.ok not err
         category = Category.make "biology"
         category.parent = parent.key
-        category.insert client, (err) ->
+        category.insert ds, (err) ->
             assert.ok not err
             cb()
 
-testCategoryInsertWithBadParent: (client, cb) ->
+testCategoryInsertWithBadParent: (ds, cb) ->
     category = Category.make "orphaned"
     category.parent = "bad-parent-key"
-    category.insert client, (err) ->
+    category.insert ds, (err) ->
         assert.ok err isnt null
         cb()
 

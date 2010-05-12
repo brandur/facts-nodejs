@@ -24,7 +24,7 @@ class Fact
     # Persistence ----
     #
 
-    insert: (client, cb) ->
+    insert: (ds, cb) ->
         # S1: initialize members for insert and save fields
         start: =>
             @key: uuid.make()
@@ -32,7 +32,7 @@ class Fact
             if @categories.length < 1 then return cb(
                 new Error "a fact must belong to at least one category"
             )
-            model.save client, "category", @toFields(), errw cb, (reply) =>
+            model.save ds, "category", @toFields(), errw cb, (reply) =>
                 addCategories @categories
         # S2: add each category to this fact's set, and add the fact to that 
         # category's facts set. This function calls itself recursively in 
@@ -40,15 +40,14 @@ class Fact
         addCategories: (categories) =>
             category = categories.shift()
             if not category then return cb null
-            Category.exists client, category, errw cb, (exists) =>
+            Category.exists ds, category, errw cb, (exists) =>
                 if not exists then return cb(
                     new Error "category key '$category' does not exist"
                 )
-                client.sadd "fact:$@key:categories", category, 
-                    errw cb, (reply) =>
-                        client.sadd "category:$category:facts", @key, 
-                            errw cb, (reply) =>
-                                addCategories categories
+                ds.sadd "fact:$@key:categories", category, errw cb, (reply) =>
+                    ds.sadd "category:$category:facts", @key, 
+                        errw cb, (reply) =>
+                            addCategories categories
         start()
 
     #

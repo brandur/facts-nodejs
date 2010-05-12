@@ -10,15 +10,15 @@ runTests: (tests, cb) ->
     if tests.length < 1 then return cb()
     test: tests.shift()
     sys.puts "Running test: " + test.name
-    client: redis.createClient()
-    client.select 13, (err, reply) ->
+    ds: redis.createClient()
+    ds.select 13, (err, reply) ->
         if err then assert.fail err, "select test database"
         assert.ok reply, "select test database"
-        client.flushdb (err, reply) ->
+        ds.flushdb (err, reply) ->
             if err then assert.fail err, "flush test database"
             assert.ok reply, "flush test database"
-            test client, ->
-                client.close()
+            test ds, ->
+                ds.close()
                 runTests tests, cb
 
 line: ->

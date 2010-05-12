@@ -25,7 +25,7 @@ class Category
     # Persistence ----
     #
 
-    insert: (client, cb) ->
+    insert: (ds, cb) ->
         # S1: initialize members for insert and generate an appropriate slug
         start: =>
             @key: uuid.make()
@@ -34,35 +34,35 @@ class Category
                 @slug: slug.make @name
                 insertSlug()
             else
-                Category.exists client, @parent, errw cb, (exists) =>
+                Category.exists ds, @parent, errw cb, (exists) =>
                     if not exists then return cb(
                         new Error "parent key '$@parent' does not exist"
                     )
-                    client.get "category:$@parent:slug", errw cb, (reply) =>
+                    ds.get "category:$@parent:slug", errw cb, (reply) =>
                         @slug: reply.toString() + "/" + slug.make @name
                         insertSlug()
         # S2: insert the slug, but fail if it's already present. Add this 
         # category to its parent's collection or a root collection.
         insertSlug: => 
-            client.setnx "category:slug:$@slug", @key, errw cb, (reply) =>
+            ds.setnx "category:slug:$@slug", @key, errw cb, (reply) =>
                 if reply is 0 then return cb(
                     new Error "category with that slug already exists"
                 )
-                client.set "category:name:$@name", @key, errw cb, (reply) =>
+                ds.set "category:name:$@name", @key, errw cb, (reply) =>
                     if not @parent then addToRootSet() else addToParentSet()
         # S3a: indicate that this a root-level category by adding it to the 
         # root set. This occurs only if there is no parent.
         addToRootSet: =>
-            client.sadd "category:root", @key, errw cb, (reply) =>
+            ds.sadd "category:root", @key, errw cb, (reply) =>
                 insertFields()
         # S3b: add this category to its parent's set of children
         addToParentSet: =>
-            client.sadd "category:$@parent:children", @key, errw cb, (reply) =>
+            ds.sadd "category:$@parent:children", @key, errw cb, (reply) =>
                 insertFields()
         # S4: persist the category's fields and add it to the 'all' set
         insertFields: => 
-            model.save client, "category", @toFields(), errw cb, (reply) =>
-                client.sadd "category:all", @key, errw cb, (reply) ->
+            model.save ds, "category", @toFields(), errw cb, (reply) =>
+                ds.sadd "category:all", @key, errw cb, (reply) ->
                     cb null
         start()
 
@@ -70,14 +70,14 @@ class Category
     # Lazy Initialization ----
     #
 
-    loadChildren: (client, cb) ->
+    loadChildren: (ds, cb) ->
         if @children.length < 1 then return cb null
-        Category.findByKeys client, @children, errw cb, (categories) =>
+        Category.findByKeys ds, @children, errw cb, (categories) =>
             @children: categories
             cb null
 
-    loadChildrenRecursively: (client, cb) ->
-        Category.loadCategories client, @categories, 0, cb
+    loadChildrenRecursively: (ds, cb) ->
+        Category.loadCategories ds, @categories, 0, cb
 
     #
     # Serialization ----
@@ -109,91 +109,91 @@ class Category
     # Sets ----
     #
 
-    @all: (client, cb) ->
-        client.smembers "category:all", errw2 cb, (keys) ->
+    @all: (ds, cb) ->
+        ds.smembers "category:all", errw2 cb, (keys) ->
             if not keys then return cb null, null
             keys: k.toString() for k in keys
-            Category.findByKeys client, keys, errw2 cb, (categories) ->
+            Category.findByKeys ds, keys, errw2 cb, (categories) ->
                 cb null, categories
 
-    @recursive: (client, cb) ->
-        Category.root client, errw2 cb, (categories) ->
-            Category.loadCategories client, categories, 0, cb
+    @recursive: (ds, cb) ->
+        Category.root ds, errw2 cb, (categories) ->
+            Category.loadCategories ds, categories, 0, cb
 
-    @root: (client, cb) ->
-        client.smembers "category:root", errw2 cb, (keys) ->
+    @root: (ds, cb) ->
+        ds.smembers "category:root", errw2 cb, (keys) ->
             if not keys then return cb null, null
             keys: k.toString() for k in keys
-            Category.findByKeys client, keys, errw2 cb, (categories) ->
+            Category.findByKeys ds, keys, errw2 cb, (categories) ->
                 cb null, categories
 
     #
     # Find ----
     #
 
-    @exists: (client, key, cb) ->
-        client.get "category:$key:name", errw2 cb, (reply) ->
+    @exists: (ds, key, cb) ->
+        ds.get "category:$key:name", errw2 cb, (reply) ->
             cb null, reply isnt null
 
-    @findByKey: (client, key, cb) ->
-        Category.findByKeys client, [key], errw2 cb, (categories) ->
+    @findByKey: (ds, key, cb) ->
+        Category.findByKeys ds, [key], errw2 cb, (categories) ->
             cb null, categories[0]
 
-    @findByKeys: (client, keys, cb) ->
+    @findByKeys: (ds, keys, cb) ->
         # S1: load fields for all requested keys using a big 'mget'
         start: =>
-            model.load client, "category", @fields(), keys, 
+            model.load ds, "category", @fields(), keys, 
                 -> new Category(), 
                 errw2 cb, (categories) -> 
-                    loadCollections client, categories, [], cb
+                    loadCollections ds, categories, [], cb
         # S2: load member collections for every object returned in the 1st 
         # step. This function traverses each object via recursion.
-        loadCollections: (client, categories, collector, cb) ->
+        loadCollections: (ds, categories, collector, cb) ->
             category: categories.shift()
             if not category then return cb null, collector
-            client.smembers "category:$category.key:children", 
+            ds.smembers "category:$category.key:children", 
                 errw2 cb, (children) ->
                     if children 
                         category.children: c.toString() for c in children
                     collector.push category
-                    loadCollections client, categories, collector, 
+                    loadCollections ds, categories, collector, 
                         errw2 cb, (categories) ->
                             cb null, categories
         start()
 
-    @findByName: (client, name, cb) ->
-        client.get "category:name:$name", errw2 cb, (reply) ->
+    @findByName: (ds, name, cb) ->
+        ds.get "category:name:$name", errw2 cb, (reply) ->
            if not reply then return cb null, null
-           Category.findByKey client, reply.toString(), cb
+           Category.findByKey ds, reply.toString(), cb
 
-    @findByPartialName: (client, name, limit, cb) ->
+    @findByPartialName: (ds, name, limit, cb) ->
         # Redis treats '*' as a wildcard, this is our only tool for searching
-        client.keys "category:name:*$name*", errw2 cb, (keys) ->
+        ds.keys "category:name:*$name*", errw2 cb, (keys) ->
             if not keys then return cb null, []
             # hopefully we won't have to split() on this in the future
             keys: keys.toString().split(" ")
             if limit > 0 and keys.length > limit
                 keys: keys.slice(0, limit)
-            redis.command client, "mget", keys, errw2 cb, (keys) ->
+            redis.command ds, "mget", keys, errw2 cb, (keys) ->
                 keys: k.toString() for k in keys
-                Category.findByKeys client, keys, errw2 cb, (categories) ->
+                Category.findByKeys ds, keys, errw2 cb, (categories) ->
                     cb null, categories
 
-    @findBySlug: (client, slug, cb) ->
-        client.get "category:slug:$slug", errw2 cb, (reply) ->
+    @findBySlug: (ds, slug, cb) ->
+        ds.get "category:slug:$slug", errw2 cb, (reply) ->
            if not reply then return cb null, null
-           Category.findByKey client, reply.toString(), cb
+           Category.findByKey ds, reply.toString(), cb
 
     #
     # Private ----
     #
 
-    @loadCategories: (client, categories, i, cb) ->
+    @loadCategories: (ds, categories, i, cb) ->
         if i >= categories.length then return cb null, categories
         category: categories[i]
-        category.loadChildren client, =>
-            loadCategories client, category.children, 0, errw2 cb, (x) =>
-                loadCategories client, categories, i+1, 
+        category.loadChildren ds, =>
+            loadCategories ds, category.children, 0, errw2 cb, (x) =>
+                loadCategories ds, categories, i+1, 
                     errw2 cb, (categories) =>
                         cb null, categories
 

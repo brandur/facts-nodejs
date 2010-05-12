@@ -35,13 +35,13 @@ get "/public/css/*.css", (file) ->
             @render file + ".css.sass", { layout: no }
 
 get "/category", ->
-    Category.recursive redis.client(), (err, categories) =>
+    Category.recursive redis.ds(), (err, categories) =>
         respondWithJSON this, -> 
             if err then error err else categories
 
 put "/category", ->
     insert: =>
-        category.insert redis.client(), (err) =>
+        category.insert redis.ds(), (err) =>
             respondWithJSON this, ->
                 if err then error err else category
     name: @param "name"
@@ -51,7 +51,7 @@ put "/category", ->
     if not parentName
         insert()
     else
-        Category.findByName redis.client(), parentName, (err, parent) =>
+        Category.findByName redis.ds(), parentName, (err, parent) =>
             if err then return respondWithJSON this, -> error err
             if not parent then return respondWithJSON this, -> 
                 error "no such parent category"
@@ -59,7 +59,7 @@ put "/category", ->
             insert()
 
 get "/category/all", ->
-    Category.all redis.client(), (err, categories) =>
+    Category.all redis.ds(), (err, categories) =>
         respondWithJSON this, -> 
             if err then error err else categories
 
@@ -74,18 +74,18 @@ get "/category/search", ->
     name: @param "q"
     if not name then return @respond 500, "need parameter 'q'"
     limit: @param(name) or -1
-    Category.findByPartialName redis.client(), name, limit, (err, categories) =>
+    Category.findByPartialName redis.ds(), name, limit, (err, categories) =>
         if err then return respond 500, err
         @contentType "text"
         @respond 200, (c.name for c in categories).join("\n")
 
 get "/category/search/:name", (name) ->
-    Category.findByPartialName redis.client(), name, -1, (err, categories) =>
+    Category.findByPartialName redis.ds(), name, -1, (err, categories) =>
         respondWithJSON this, ->
             if err then error err else categories
 
 get "/category/*", (slug) ->
-    Category.findBySlug redis.client(), slug, (err, category) =>
+    Category.findBySlug redis.ds(), slug, (err, category) =>
         respondWithJSON this, ->
             if err then error err else category
 

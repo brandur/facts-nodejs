@@ -9,28 +9,28 @@ exports.factTests: -> [
     testFactInsertWithNoCategories
 ]
 
-testFactInsert: (client, cb) ->
+testFactInsert: (ds, cb) ->
     category: Category.make "science"
-    category.insert client, (err) ->
+    category.insert ds, (err) ->
         assert.ok not err
         fact: Fact.make "science is fun!"
         fact.categories.push category.key
-        fact.insert client, (err) ->
+        fact.insert ds, (err) ->
             assert.ok not err
             assert.ok fact.key isnt undefined
             assert.ok fact.createdAt isnt undefined
             cb()
 
-testFactInsertWithBadCategory: (client, cb) ->
+testFactInsertWithBadCategory: (ds, cb) ->
     fact: Fact.make "science is fun!"
     fact.categories.push "bad-category-key"
-    fact.insert client, (err) ->
+    fact.insert ds, (err) ->
         assert.ok err isnt null
         cb()
 
-testFactInsertWithNoCategories: (client, cb) ->
+testFactInsertWithNoCategories: (ds, cb) ->
     fact: Fact.make "science is fun!"
-    fact.insert client, (err) ->
+    fact.insert ds, (err) ->
         assert.ok err isnt null
         cb()
 
