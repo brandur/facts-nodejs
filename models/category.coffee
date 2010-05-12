@@ -28,7 +28,7 @@ class exports.Category
     insert: (client, callback) ->
         # Step 1: initialize members for insert and generate an appropriate 
         # slug
-        insert: =>
+        start: =>
             @key: uuid.make()
             @createdAt: time.now()
             if not @parent
@@ -60,7 +60,7 @@ class exports.Category
             model.save client, "category", @toFields(), errWrap callback, (reply) =>
                 client.sadd "category:all", @key, errWrap callback, (reply) ->
                     callback null
-        insert()
+        start()
 
     #
     # Lazy Initialization ----
@@ -71,6 +71,9 @@ class exports.Category
         exports.Category.findByKeys client, @children, errWrap callback, (categories) =>
             @children: categories
             callback null
+
+    loadChildrenRecursively: (client, callback) ->
+        exports.Category.loadCategories client, @categories, 0, callback
 
     #
     # Serialization ----
@@ -106,14 +109,7 @@ class exports.Category
 
     @recursive: (client, callback) ->
         exports.Category.root client, errWrap2 callback, (categories) ->
-            loadCategories: (client, categories, i, callback) ->
-                if i >= categories.length then return callback null, categories
-                category: categories[i]
-                category.loadChildren client, =>
-                    loadCategories client, category.children, 0, errWrap2 callback, (x) =>
-                        loadCategories client, categories, i+1, errWrap2 callback, (categories) =>
-                            callback null, categories
-            loadCategories client, categories, 0, callback
+            exports.Category.loadCategories client, categories, 0, callback
 
     @root: (client, callback) ->
         client.smembers "category:root", errWrap2 callback, (keys) ->
@@ -168,4 +164,16 @@ class exports.Category
         client.get "category:slug:$slug:key", errWrap2 callback, (reply) ->
            if not reply then return callback null, null
            exports.Category.findByKey client, reply.toString(), callback
+
+    #
+    # Private ----
+    #
+
+    @loadCategories: (client, categories, i, callback) ->
+        if i >= categories.length then return callback null, categories
+        category: categories[i]
+        category.loadChildren client, =>
+            loadCategories client, category.children, 0, errWrap2 callback, (x) =>
+                loadCategories client, categories, i+1, errWrap2 callback, (categories) =>
+                    callback null, categories
 
