@@ -8,21 +8,21 @@ Category: require("../models/category").Category
 
 level: 0
 
-addCategories: (client, categories, parent, callback) ->
+addCategories: (ds, categories, parent, callback) ->
     category = categories.shift()
     if not category then return callback()
-    addCategory client, category, parent, =>
-        addCategories client, categories, parent, =>
+    addCategory ds, category, parent, =>
+        addCategories ds, categories, parent, =>
             callback()
 
-addCategory: (client, category, parent, callback) ->
+addCategory: (ds, category, parent, callback) ->
     category2 = Category.make category.name
     category2.parent = parent
-    category2.insert client, (err) =>
+    category2.insert ds, (err) =>
         if err then throw err
         sys.puts "inserted $category2.slug"
         if category.children
-            addCategories client, category.children, category2.key, =>
+            addCategories ds, category.children, category2.key, =>
                 callback()
         else
             callback()
@@ -33,9 +33,9 @@ line: ->
 main: ->
     data: fs.readFileSync "./tools/fixtures.json"
     fixtures: eval data
-    client: redis.client()
+    ds: redis.ds()
     sys.puts line()
-    addCategories client, fixtures.categories, null, ->
+    addCategories ds, fixtures.categories, null, ->
         sys.puts "DONE!"
         sys.puts line()
         process.exit()
