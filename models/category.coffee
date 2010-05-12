@@ -29,7 +29,7 @@ class exports.Category
         save: => 
             client.setnx "category:slug:$@slug:key", @key, errWrap callback, (reply) =>
                 if reply is 0 
-                    return callback new Error("category with that slug already exists")
+                    return callback new Error "category with that slug already exists"
                 client.set "category:name:$@name:key", @key, errWrap callback, (reply) =>
                     save2: => model.save client, "category", @toFields(), errWrap callback, (reply) =>
                         client.sadd "category:all", @key, errWrap callback, (reply) ->
@@ -69,7 +69,7 @@ class exports.Category
     #
 
     @fields: ->
-        [ "name", "slug", "parent", [ "createdAt", "created_at" ] ]
+        [ "name", "slug", "parent", { obj: "createdAt", datastore: "created_at" } ]
 
     toFields: ->
         {
