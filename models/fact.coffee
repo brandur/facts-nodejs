@@ -4,7 +4,6 @@ sys:   require "sys"
 time:  require "../lib/time"
 uuid:  require "../lib/uuid"
 
-
 Category: require("../models/category").Category
 
 class Fact
@@ -26,7 +25,7 @@ class Fact
     #
 
     insert: (client, cb) ->
-        # Step 1: initialize members for insert and save fields
+        # S1: initialize members for insert and save fields
         start: =>
             @key: uuid.make()
             @createdAt: time.now()
@@ -35,8 +34,8 @@ class Fact
             )
             model.save client, "category", @toFields(), errw cb, (reply) =>
                 addCategories @categories
-        # Step 2: add each category to this fact's set, and add the fact to 
-        # that category's facts set. This function calls itself recursively in 
+        # S2: add each category to this fact's set, and add the fact to that 
+        # category's facts set. This function calls itself recursively in 
         # order to add all categories.
         addCategories: (categories) =>
             category = categories.shift()

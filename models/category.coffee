@@ -26,8 +26,7 @@ class Category
     #
 
     insert: (client, cb) ->
-        # Step 1: initialize members for insert and generate an appropriate 
-        # slug
+        # S1: initialize members for insert and generate an appropriate slug
         start: =>
             @key: uuid.make()
             @createdAt: time.now()
@@ -42,7 +41,7 @@ class Category
                     client.get "category:$@parent:slug", errw cb, (reply) =>
                         @slug: reply.toString() + "/" + slug.make @name
                         insertSlug()
-        # Step 2: insert the slug, but fail if it's already present. Add this 
+        # S2: insert the slug, but fail if it's already present. Add this 
         # category to its parent's collection or a root collection.
         insertSlug: => 
             client.setnx "category:slug:$@slug", @key, errw cb, (reply) =>
@@ -51,16 +50,16 @@ class Category
                 )
                 client.set "category:name:$@name", @key, errw cb, (reply) =>
                     if not @parent then addToRootSet() else addToParentSet()
-        # Step 3a: indicate that this a root-level category by adding it to 
-        # the root set. This occurs only if there is no parent.
+        # S3a: indicate that this a root-level category by adding it to the 
+        # root set. This occurs only if there is no parent.
         addToRootSet: =>
             client.sadd "category:root", @key, errw cb, (reply) =>
                 insertFields()
-        # Step 3b: add this category to its parent's set of children
+        # S3b: add this category to its parent's set of children
         addToParentSet: =>
             client.sadd "category:$@parent:children", @key, errw cb, (reply) =>
                 insertFields()
-        # Step 4: persist the category's fields and add it to the 'all' set
+        # S4: persist the category's fields and add it to the 'all' set
         insertFields: => 
             model.save client, "category", @toFields(), errw cb, (reply) =>
                 client.sadd "category:all", @key, errw cb, (reply) ->
@@ -141,13 +140,13 @@ class Category
             cb null, categories[0]
 
     @findByKeys: (client, keys, cb) ->
-        # Step 1: load fields for all requested keys using a big 'mget'
+        # S1: load fields for all requested keys using a big 'mget'
         start: =>
             model.load client, "category", @fields(), keys, 
                 -> new Category(), 
                 errw2 cb, (categories) -> 
                     loadCollections client, categories, [], cb
-        # Step 2: load member collections for every object returned in the 1st 
+        # S2: load member collections for every object returned in the 1st 
         # step. This function traverses each object via recursion.
         loadCollections: (client, categories, collector, cb) ->
             category: categories.shift()
