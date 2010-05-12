@@ -103,7 +103,7 @@ class exports.Category
 
     @findByPartialName: (client, name, limit, callback) ->
         # Redis treats '*' as a wildcard, this is our only tool for searching
-        client.keys "category:slug:*$name*:key", errWrap2 callback, (keys) ->
+        client.keys "category:name:*$name*:key", errWrap2 callback, (keys) ->
             if not keys then return callback null, []
             # hopefully we won't have to split() on this in the future
             keys: keys.toString().split(" ")
