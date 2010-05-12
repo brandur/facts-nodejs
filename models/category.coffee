@@ -7,7 +7,7 @@ sys:   require "sys"
 time:  require "../lib/time"
 uuid:  require "../lib/uuid"
 
-class exports.Category
+class Category
 
     #
     # Initialization ----
@@ -17,7 +17,7 @@ class exports.Category
         @children: []
 
     @make: (name) ->
-        category: new exports.Category()
+        category: new Category()
         category.name: name
         category
 
@@ -35,7 +35,7 @@ class exports.Category
                 @slug: slug.make @name
                 insertSlug()
             else
-                exports.Category.exists client, @parent, errWrap callback, (exists) =>
+                Category.exists client, @parent, errWrap callback, (exists) =>
                     if not exists 
                         return callback "parent key '$@parent' does not exist"
                     client.get "category:$@parent:slug", errWrap callback, (reply) =>
@@ -68,12 +68,12 @@ class exports.Category
 
     loadChildren: (client, callback) ->
         if @children.length < 1 then return callback null
-        exports.Category.findByKeys client, @children, errWrap callback, (categories) =>
+        Category.findByKeys client, @children, errWrap callback, (categories) =>
             @children: categories
             callback null
 
     loadChildrenRecursively: (client, callback) ->
-        exports.Category.loadCategories client, @categories, 0, callback
+        Category.loadCategories client, @categories, 0, callback
 
     #
     # Serialization ----
@@ -104,18 +104,18 @@ class exports.Category
         client.smembers "category:all", errWrap2 callback, (keys) ->
             if not keys then return callback null, null
             keys: k.toString() for k in keys
-            exports.Category.findByKeys client, keys, errWrap2 callback, (categories) ->
+            Category.findByKeys client, keys, errWrap2 callback, (categories) ->
                 callback null, categories
 
     @recursive: (client, callback) ->
-        exports.Category.root client, errWrap2 callback, (categories) ->
-            exports.Category.loadCategories client, categories, 0, callback
+        Category.root client, errWrap2 callback, (categories) ->
+            Category.loadCategories client, categories, 0, callback
 
     @root: (client, callback) ->
         client.smembers "category:root", errWrap2 callback, (keys) ->
             if not keys then return callback null, null
             keys: k.toString() for k in keys
-            exports.Category.findByKeys client, keys, errWrap2 callback, (categories) ->
+            Category.findByKeys client, keys, errWrap2 callback, (categories) ->
                 callback null, categories
 
     #
@@ -127,11 +127,11 @@ class exports.Category
             callback null, reply isnt null
 
     @findByKey: (client, key, callback) ->
-        exports.Category.findByKeys client, [key], errWrap2 callback, (categories) ->
+        Category.findByKeys client, [key], errWrap2 callback, (categories) ->
             callback null, categories[0]
 
     @findByKeys: (client, keys, callback) ->
-        model.load client, "category", @fields(), keys, (-> new exports.Category()), errWrap2 callback, (categories) =>
+        model.load client, "category", @fields(), keys, (-> new Category()), errWrap2 callback, (categories) =>
             loadCollections: (client, categories, result, callback) ->
                 category: categories.shift()
                 if not category then return callback null, result
@@ -145,7 +145,7 @@ class exports.Category
     @findByName: (client, name, callback) ->
         client.get "category:name:$name:key", errWrap2 callback, (reply) ->
            if not reply then return callback null, null
-           exports.Category.findByKey client, reply.toString(), callback
+           Category.findByKey client, reply.toString(), callback
 
     @findByPartialName: (client, name, limit, callback) ->
         # Redis treats '*' as a wildcard, this is our only tool for searching
@@ -157,13 +157,13 @@ class exports.Category
                 keys: keys.slice(0, limit)
             redis.command client, "mget", keys, errWrap2 callback, (keys) ->
                 keys: k.toString() for k in keys
-                exports.Category.findByKeys client, keys, errWrap2 callback, (categories) ->
+                Category.findByKeys client, keys, errWrap2 callback, (categories) ->
                     callback null, categories
 
     @findBySlug: (client, slug, callback) ->
         client.get "category:slug:$slug:key", errWrap2 callback, (reply) ->
            if not reply then return callback null, null
-           exports.Category.findByKey client, reply.toString(), callback
+           Category.findByKey client, reply.toString(), callback
 
     #
     # Private ----
@@ -176,4 +176,6 @@ class exports.Category
             loadCategories client, category.children, 0, errWrap2 callback, (x) =>
                 loadCategories client, categories, i+1, errWrap2 callback, (categories) =>
                     callback null, categories
+
+exports.Category: Category
 
