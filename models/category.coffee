@@ -152,12 +152,16 @@ class Category
         loadCollections: (client, categories, collector, cb) ->
             category: categories.shift()
             if not category then return cb null, collector
-            client.smembers "category:$category.key:children", errw2 cb, (children) ->
-                if children 
-                    category.children: c.toString() for c in children
-                collector.push category
-                loadCollections client, categories, collector, errw2 cb, (categories) ->
-                    cb null, categories
+            client.smembers("category:$category.key:children", 
+                errw2 cb, (children) ->
+                    if children 
+                        category.children: c.toString() for c in children
+                    collector.push category
+                    loadCollections(client, categories, collector, 
+                        errw2 cb, (categories) ->
+                            cb null, categories
+                    )
+            )
         start()
 
     @findByName: (client, name, cb) ->
