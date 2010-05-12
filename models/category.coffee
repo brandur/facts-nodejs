@@ -102,9 +102,9 @@ class Category
         }
 
     toJSON: ->
-        o: @toFields()
-        o.children: @children
-        o
+        obj: @toFields()
+        obj.children: @children
+        obj
 
     #
     # Sets ----
