@@ -9,7 +9,7 @@ exports.load: (ds, type, fields, keys, newFunc, callback) ->
             if typeof f is "string"
                 args.push "$type:$k:$f"
             else 
-                args.push "$type:$k:" + f.datastore
+                args.push "$type:$k:" + f.ds
     redis.command ds, "mget", args, (err, reply) ->
         if err then callback err, null
         objs: []
