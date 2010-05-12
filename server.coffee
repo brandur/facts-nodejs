@@ -11,7 +11,7 @@ sys:   require "sys"
 Category: require("./models/category").Category
 
 #
-# Configuration
+# Configuration ----
 #
 
 configure ->
@@ -24,7 +24,7 @@ process.addListener "uncaughtException", (err) ->
     sys.error "Caught exception: " + err
 
 #
-# Routes
+# Routes ----
 #
 
 get "/public/css/*.css", (file) ->
@@ -90,7 +90,7 @@ get "/category/*", (slug) ->
             if err then error err else category
 
 #
-# Helpers
+# Private ----
 #
 
 error: (err) ->
