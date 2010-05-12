@@ -9,8 +9,21 @@ uuid:  require "../lib/uuid"
 
 class exports.Category
 
+    #
+    # Initialization ----
+    #
+
     constructor: ->
         @children: []
+
+    @make: (name) ->
+        category: new exports.Category()
+        category.name: name
+        category
+
+    #
+    # Persistence ----
+    #
 
     insert: (client, callback) ->
         save: => 
@@ -41,11 +54,22 @@ class exports.Category
                     @slug: reply.toString() + "/" + slug.make @name
                     save()
 
+    #
+    # Lazy Initialization ----
+    #
+
     loadChildren: (client, callback) ->
         if @children.length < 1 then return callback null
         exports.Category.findByKeys client, @children, errWrap callback, (categories) =>
             @children: categories
             callback null
+
+    #
+    # Serialization ----
+    #
+
+    @fields: ->
+        [ "name", "slug", "parent", [ "createdAt", "created_at" ] ]
 
     toFields: ->
         {
@@ -61,6 +85,10 @@ class exports.Category
         o.children: @children
         o
 
+    #
+    # Sets ----
+    #
+
     @all: (client, callback) ->
         client.smembers "category:all", errWrap2 callback, (keys) ->
             if not keys then return callback null, null
@@ -68,12 +96,31 @@ class exports.Category
             exports.Category.findByKeys client, keys, errWrap2 callback, (categories) ->
                 callback null, categories
 
+    @recursive: (client, callback) ->
+        exports.Category.root client, errWrap2 callback, (categories) ->
+            loadCategories: (client, categories, i, callback) ->
+                if i >= categories.length then return callback null, categories
+                category: categories[i]
+                category.loadChildren client, =>
+                    loadCategories client, category.children, 0, errWrap2 callback, (x) =>
+                        loadCategories client, categories, i+1, errWrap2 callback, (categories) =>
+                            callback null, categories
+            loadCategories client, categories, 0, callback
+
+    @root: (client, callback) ->
+        client.smembers "category:root", errWrap2 callback, (keys) ->
+            if not keys then return callback null, null
+            keys: k.toString() for k in keys
+            exports.Category.findByKeys client, keys, errWrap2 callback, (categories) ->
+                callback null, categories
+
+    #
+    # Find ----
+    #
+
     @exists: (client, key, callback) ->
         client.get "category:$key:name", errWrap2 callback, (reply) ->
             callback null, reply isnt null
-
-    @fields: ->
-        [ "name", "slug", "parent", [ "createdAt", "created_at" ] ]
 
     @findByKey: (client, key, callback) ->
         exports.Category.findByKeys client, [key], errWrap2 callback, (categories) ->
@@ -96,11 +143,6 @@ class exports.Category
            if not reply then return callback null, null
            exports.Category.findByKey client, reply.toString(), callback
 
-    @findBySlug: (client, slug, callback) ->
-        client.get "category:slug:$slug:key", errWrap2 callback, (reply) ->
-           if not reply then return callback null, null
-           exports.Category.findByKey client, reply.toString(), callback
-
     @findByPartialName: (client, name, limit, callback) ->
         # Redis treats '*' as a wildcard, this is our only tool for searching
         client.keys "category:name:*$name*:key", errWrap2 callback, (keys) ->
@@ -114,26 +156,8 @@ class exports.Category
                 exports.Category.findByKeys client, keys, errWrap2 callback, (categories) ->
                     callback null, categories
 
-    @make: (name) ->
-        category: new exports.Category()
-        category.name: name
-        category
-
-    @root: (client, callback) ->
-        client.smembers "category:root", errWrap2 callback, (keys) ->
-            if not keys then return callback null, null
-            keys: k.toString() for k in keys
-            exports.Category.findByKeys client, keys, errWrap2 callback, (categories) ->
-                callback null, categories
-
-    @recursive: (client, callback) ->
-        exports.Category.root client, errWrap2 callback, (categories) ->
-            loadCategories: (client, categories, i, callback) ->
-                if i >= categories.length then return callback null, categories
-                category: categories[i]
-                category.loadChildren client, =>
-                    loadCategories client, category.children, 0, errWrap2 callback, (x) =>
-                        loadCategories client, categories, i+1, errWrap2 callback, (categories) =>
-                            callback null, categories
-            loadCategories client, categories, 0, callback
+    @findBySlug: (client, slug, callback) ->
+        client.get "category:slug:$slug:key", errWrap2 callback, (reply) ->
+           if not reply then return callback null, null
+           exports.Category.findByKey client, reply.toString(), callback
 
