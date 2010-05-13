@@ -5,6 +5,7 @@ Fact:     require("../models/fact").Fact
 
 exports.factTests: -> [
     testFactInsert
+    testFactInsertWithManyCategories
     testFactInsertWithBadCategory
     testFactInsertWithNoCategories
 ]
@@ -20,6 +21,20 @@ testFactInsert: (ds, cb) ->
             assert.ok fact.key isnt undefined
             assert.ok fact.createdAt isnt undefined
             cb()
+
+testFactInsertWithManyCategories: (ds, cb) ->
+    fact: Fact.make "science & art are fun!"
+    science: Category.make "science"
+    science.insert ds, (err) ->
+        assert.ok not err
+        fact.categories.push science.key
+        art: Category.make "art"
+        art.insert ds, (err) ->
+            assert.ok not err
+            fact.categories.push art.key
+            fact.insert ds, (err) ->
+                assert.ok not err
+                cb()
 
 testFactInsertWithBadCategory: (ds, cb) ->
     fact: Fact.make "science is fun!"

@@ -21,6 +21,13 @@ class Fact
         fact 
 
     #
+    # Properties ----
+    #
+
+    excerpt: ->
+        @content[0...20] + " ..."
+
+    #
     # Persistence ----
     #
 

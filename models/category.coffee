@@ -173,11 +173,30 @@ class Category
             # hopefully we won't have to split() on this in the future
             keys: keys.toString().split(" ")
             if limit > 0 and keys.length > limit
-                keys: keys.slice(0, limit)
+                keys: keys.slice 0, limit
             redis.command ds, "mget", keys, errw2 cb, (keys) ->
                 keys: k.toString() for k in keys
                 Category.findByKeys ds, keys, errw2 cb, (categories) ->
                     cb null, categories
+
+    # Finds a category by its name path (every category can be represented 
+    # uniquely using its name, and the name of each of its parents). _path_ 
+    # should be given as an array of names starting at the root.
+    @findByPath: (ds, fullPath, cb) ->
+        start: ->
+            path = fullPath[0...fullPath.length]
+            root = path.shift()
+            Category.findByName ds, root, errw2 cb, (category) ->
+                findDescendant path, category, cb
+        findDescendant: (path, category, cb) ->
+            next = path.shift()
+            if path.length < 1 then return cb null, category
+            category.loadChildren ds, errw cb, () ->
+                for c in category.categories
+                    if c.name == next
+                        return findDescendant path, c, cb
+                return cb new Error "no category at path: $path", null
+        start()
 
     @findBySlug: (ds, slug, cb) ->
         ds.get "category:slug:$slug", errw2 cb, (reply) ->
@@ -191,10 +210,10 @@ class Category
     @loadCategories: (ds, categories, i, cb) ->
         if i >= categories.length then return cb null, categories
         category: categories[i]
-        category.loadChildren ds, =>
-            loadCategories ds, category.children, 0, errw2 cb, (x) =>
+        category.loadChildren ds, ->
+            loadCategories ds, category.children, 0, errw2 cb, (x) ->
                 loadCategories ds, categories, i+1, 
-                    errw2 cb, (categories) =>
+                    errw2 cb, (categories) ->
                         cb null, categories
 
 exports.Category: Category

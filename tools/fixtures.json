@@ -66,6 +66,23 @@
             }
           ]
         }
+    ], 
+    "facts": [
+        { "content": "A 20th century avant-garde art movement pioneered by _Pablo Picasso_ and _Georges Braque_."
+        , "categories": [
+            [ "art", "cubism" ]
+          ]
+        }, 
+        { "content": "Often surfaces intersect at random angles, removing coherent sense of depth."
+        , "categories": [
+            [ "art", "cubism" ]
+          ]
+        }, 
+        { "content": "Background and object planes interpenetrate one another to create shallow ambiguous space."
+        , "categories": [
+            [ "art", "cubism" ]
+          ]
+        }
     ]
 })
 
