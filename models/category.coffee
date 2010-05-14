@@ -142,8 +142,8 @@ class Category
     #
 
     @exists: (ds, key, cb) ->
-        ds.get "category:$key:name", errw2 cb, (reply) ->
-            cb null, reply isnt null
+        ds.exists "category:$key:name", errw2 cb, (reply) ->
+            cb null, reply is 1
 
     @findByKey: (ds, key, cb) ->
         Category.findByKeys ds, [key], errw2 cb, (categories) ->
