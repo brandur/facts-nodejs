@@ -10,6 +10,7 @@ exports.load: (ds, type, fields, keys, newFunc, callback) ->
                 args.push "$type:$k:$f"
             else 
                 args.push "$type:$k:" + f.ds
+    #sys.p args
     redis.command ds, "mget", args, (err, reply) ->
         if err then callback err, null
         objs: []
@@ -30,9 +31,9 @@ exports.load: (ds, type, fields, keys, newFunc, callback) ->
 exports.save: (ds, type, serialized, callback) ->
     args = []
     for k, v of serialized
-        #sys.puts "k:" + k + " v:" + v
         if k isnt "key" and v
             args.push "$type:$serialized.key:$k"
             args.push v
+    #sys.p args
     redis.command ds, "mset", args, callback
 

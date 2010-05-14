@@ -80,6 +80,14 @@ class Category
     loadChildrenRecursively: (ds, cb) ->
         Category.loadCategories ds, @categories, 0, cb
 
+    loadFacts: (ds, cb) ->
+        if @facts.length < 1 then return cb null
+        # @todo: any way to move this out of here?
+        Fact: require("../models/fact").Fact
+        Fact.findByKeys ds, @facts, errw cb, (facts) =>
+            @facts: facts
+            cb null
+
     #
     # Serialization ----
     #

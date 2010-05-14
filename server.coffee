@@ -9,7 +9,7 @@ redis: require "./lib/redis"
 sys:   require "sys"
 
 Category: require("./models/category").Category
-Fact:     require("./models/category").Fact
+Fact:     require("./models/fact").Fact
 
 #
 # Configuration ----
@@ -95,13 +95,13 @@ get "/category/*", (slug) ->
     Category.findBySlug ds, slug, (err, category) =>
         # @todo: check for error
         category.loadChildren ds, (err) =>
-            #category.loadFacts ds, (err) =>
-            @render "category.view.html.haml", {
-                locals: {
-                    title: "$category.name ($category.slug)", 
-                    category: category
+            category.loadFacts ds, (err) =>
+                @render "category.view.html.haml", {
+                    locals: {
+                        title: "$category.name ($category.slug)", 
+                        category: category
+                    }
                 }
-            }
 
 #
 # Private ----

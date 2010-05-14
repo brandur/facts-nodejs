@@ -39,7 +39,7 @@ class Fact
             if @categories.length < 1 then return cb(
                 new Error "a fact must belong to at least one category"
             )
-            model.save ds, "category", @toFields(), errw cb, (reply) =>
+            model.save ds, "fact", @toFields(), errw cb, (reply) =>
                 addCategories @categories
         # S2: add each category to this fact's set, and add the fact to that 
         # category's facts set. This function calls itself recursively in 
@@ -107,12 +107,6 @@ class Fact
                 loadCollections ds, facts, collector, errw2 cb, (facts) ->
                     cb null, facts
         start()
-
-Category.prototype.loadFacts: (ds, cb) ->
-    if @facts.length < 1 then return cb null
-    Fact.findByKeys ds, @facts, errw cb, (facts) =>
-        @facts: facts
-        cb null
 
 exports.Fact: Fact
 
