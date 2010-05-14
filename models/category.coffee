@@ -103,6 +103,7 @@ class Category
     toJSON: ->
         obj: @toFields()
         obj.children: @children
+        obj.facts: @facts
         obj
 
     #
@@ -151,14 +152,20 @@ class Category
         loadCollections: (ds, categories, collector, cb) ->
             category: categories.shift()
             if not category then return cb null, collector
+            # Load child categories
             ds.smembers "category:$category.key:children", 
                 errw2 cb, (children) ->
                     if children 
                         category.children: c.toString() for c in children
-                    collector.push category
-                    loadCollections ds, categories, collector, 
-                        errw2 cb, (categories) ->
-                            cb null, categories
+                    # Load facts
+                    ds.smembers "category:$category.key:facts", 
+                        errw2 cb, (facts) ->
+                            if facts
+                                category.facts: c.toString() for c in facts
+                            collector.push category
+                            loadCollections ds, categories, collector, 
+                                errw2 cb, (categories) ->
+                                    cb null, categories
         start()
 
     @findByName: (ds, name, cb) ->
@@ -189,13 +196,14 @@ class Category
             Category.findByName ds, root, errw2 cb, (category) ->
                 findDescendant path, category, cb
         findDescendant: (path, category, cb) ->
-            next = path.shift()
             if path.length < 1 then return cb null, category
+            next = path.shift()
             category.loadChildren ds, errw cb, () ->
-                for c in category.categories
-                    if c.name == next
-                        return findDescendant path, c, cb
-                return cb new Error "no category at path: $path", null
+                if category.children
+                    for c in category.children
+                        if c.name == next
+                            return findDescendant path, c, cb
+                return cb new Error "no category at path: $fullPath", null
         start()
 
     @findBySlug: (ds, slug, cb) ->
