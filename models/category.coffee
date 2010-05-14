@@ -15,6 +15,7 @@ class Category
 
     constructor: ->
         @children: []
+        @facts: []
 
     @make: (name) ->
         category: new Category()

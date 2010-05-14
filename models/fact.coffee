@@ -77,7 +77,42 @@ class Fact
     toJSON: ->
         obj: @toFields()
         obj.categories: @categories
+        obj.excerpt: @excerpt()
         obj
+
+    #
+    # Find ----
+    #
+
+    @findByKey: (ds, key, cb) ->
+        Fact.findByKeys ds, [key], errw2 cb, (facts) ->
+            cb null, facts[0]
+
+    @findByKeys: (ds, keys, cb) ->
+        # S1: load fields for all requested keys using a big 'mget'
+        start: =>
+            model.load ds, "fact", @fields(), keys, 
+                -> new Fact(), 
+                errw2 cb, (facts) -> 
+                    loadCollections ds, facts, [], cb
+        # S2: load member collections for every object returned in the 1st 
+        # step. This function traverses each object via recursion.
+        loadCollections: (ds, facts, collector, cb) ->
+            fact: facts.shift()
+            if not fact then return cb null, collector
+            ds.smembers "fact:$fact.key:categories", errw2 cb, (categories) ->
+                if categories
+                    fact.categories: c.toString() for c in categories
+                collector.push fact
+                loadCollections ds, facts, collector, errw2 cb, (facts) ->
+                    cb null, facts
+        start()
+
+Category.prototype.loadFacts: (ds, cb) ->
+    if @facts.length < 1 then return cb null
+    Fact.findByKeys ds, @facts, errw cb, (facts) =>
+        @facts: facts
+        cb null
 
 exports.Fact: Fact
 

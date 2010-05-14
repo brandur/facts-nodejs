@@ -9,6 +9,7 @@ redis: require "./lib/redis"
 sys:   require "sys"
 
 Category: require("./models/category").Category
+Fact:     require("./models/category").Fact
 
 #
 # Configuration ----
@@ -64,7 +65,7 @@ get "/category/all", ->
             if err then error err else categories
 
 get "/category/new", ->
-    this.render "category.new.html.haml", {
+    @render "category.new.html.haml", {
         locals: {
             title: 'New Category'
         }
@@ -84,10 +85,23 @@ get "/category/search/:name", (name) ->
         respondWithJSON this, ->
             if err then error err else categories
 
-get "/category/*", (slug) ->
+get "/category/*.json", (slug) ->
     Category.findBySlug redis.ds(), slug, (err, category) =>
         respondWithJSON this, ->
             if err then error err else category
+
+get "/category/*", (slug) ->
+    ds: redis.ds()
+    Category.findBySlug ds, slug, (err, category) =>
+        # @todo: check for error
+        category.loadChildren ds, (err) =>
+            #category.loadFacts ds, (err) =>
+            @render "category.view.html.haml", {
+                locals: {
+                    title: "$category.name ($category.slug)", 
+                    category: category
+                }
+            }
 
 #
 # Private ----

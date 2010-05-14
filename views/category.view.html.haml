@@ -1,0 +1,13 @@
+%h1= category.name
+
+- if (category.children.length > 0)
+  %h2= "Children"
+  %ul
+    - each child in category.children
+      %li= child.name
+
+- if (category.facts.length > 0)
+  %h2= "Facts"
+  %ul
+    - each fact in category.facts
+      %li= fact.content
