@@ -40,7 +40,7 @@ class Fact
                 new Error "a fact must belong to at least one category"
             )
             model.save ds, "fact", @toFields(), errw cb, (reply) =>
-                addCategories @categories
+                addCategories @categories[0...@categories.length]
         # S2: add each category to this fact's set, and add the fact to that 
         # category's facts set. This function calls itself recursively in 
         # order to add all categories.
@@ -57,6 +57,21 @@ class Fact
                             addCategories categories
         start()
 
+    remove: (ds, cb) ->
+        # S1: start recursive category removal
+        start: =>
+            if not @key then return cb new Error "need primary key to delete"
+            removeCategories @categories
+        # S2: remove this fact from each of its categories' sets, then delete 
+        # each of its fields
+        removeCategories: (categories) =>
+            category = categories.shift()
+            if not category 
+                return model.remove ds, "fact", Fact.members(), [@key], cb
+            ds.srem "category:$category:facts", @key, errw cb, (reply) =>
+                removeCategories categories
+        start()
+
     #
     # Serialization ----
     #
@@ -66,6 +81,9 @@ class Fact
             "content"
             { obj: "createdAt", ds: "created_at" }
         ]
+
+    @members: ->
+        @fields().concat ["categories"]
 
     toFields: ->
         {

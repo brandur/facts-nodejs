@@ -1,4 +1,5 @@
 assert: require "assert"
+sys:    require "sys"
 
 Category: require("../models/category").Category
 Fact:     require("../models/fact").Fact
@@ -8,6 +9,7 @@ exports.factTests: -> [
     testFactInsertWithManyCategories
     testFactInsertWithBadCategory
     testFactInsertWithNoCategories
+    testFactRemove
 ]
 
 testFactInsert: (ds, cb) ->
@@ -48,4 +50,20 @@ testFactInsertWithNoCategories: (ds, cb) ->
     fact.insert ds, (err) ->
         assert.ok err isnt null
         cb()
+
+testFactRemove: (ds, cb) ->
+    category: Category.make "science"
+    category.insert ds, (err) ->
+        assert.ok not err
+        fact: Fact.make "science is fun!"
+        fact.categories.push category.key
+        fact.insert ds, (err) ->
+            assert.ok not err
+            fact.remove ds, (err) ->
+                assert.ok not err
+                ds.keys "fact:*", (err, reply) ->
+                    assert.ok not err and not reply
+                    ds.smembers "category:$category.key:facts", (err, reply) ->
+                        assert.ok not err and not reply
+                        cb()
 
