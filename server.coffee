@@ -95,8 +95,8 @@ get "/category/*", (slug) ->
     ds: redis.ds()
     Category.findBySlug ds, slug, (err, category) =>
         # @todo: check for error
-        category.loadChildren ds, (err) =>
-            category.loadFacts ds, (err) =>
+        category.loadFacts ds, (err) =>
+            category.loadChildrenWithFacts ds, (err) =>
                 @render "category.view.html.haml", {
                     locals: {
                         title: "$category.name ($category.slug)", 
@@ -111,10 +111,6 @@ del "/fact/:key", (key) ->
         fact.destroy ds, (err) =>
             respondWithJSON this, ->
                 if err then error err else { "msg": "OK" }
-
-post "/fact/:key", (key) ->
-    sys.puts "got post"
-    respondWithJSON this, -> { "msg": OK }
 
 #
 # Private ----

@@ -1,10 +1,9 @@
 %h1= category.name
 
 - if (category.children.length > 0)
-  %h2= "Children"
-  %ul
-    - each child in category.children
-      %li= child.name
+  %strong= "Subcategories"
+  - each child in category.children
+    %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= child.name
 
 - if (category.facts.length > 0)
   %h2= "Facts"
@@ -14,8 +13,14 @@
         = fact.content
         %a.fact_delete{ href: "#", title: "Delete this fact" }= "[del]"
 
-%form{ method: "post", action: "/fact/a15bc916-4204-56a2-be51-864957e01e0b" }
-  %input{ type: 'hidden', name: '_method', value: 'delete' }
-  %fieldset
-    %ul
-      %input{ type: 'submit', value: 'Create' }
+- if (category.children.length > 0)
+  - each child in category.children
+    - if (child.facts.length > 0)
+      %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }
+        %h3= child.name
+      %ul
+        - each fact in child.facts
+          %li{ id: fact.key }= fact.content
+      - if (child.children.length > 0)
+        %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= "+ " + child.children.length + " subcategor(ies)"
+

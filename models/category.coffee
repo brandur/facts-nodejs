@@ -80,6 +80,19 @@ class Category
     loadChildrenRecursively: (ds, cb) ->
         Category.loadCategories ds, @categories, 0, cb
 
+    loadChildrenWithFacts: (ds, cb) ->
+        start: =>
+            @loadChildren ds, (err) =>
+                if err then return cb err
+                loadFacts @children[0...@children.length]
+        loadFacts: (categories) ->
+            category = categories.shift()
+            if not category then return cb null
+            category.loadFacts ds, (err) ->
+                if err then return cb err
+                loadFacts categories
+        start()
+
     loadFacts: (ds, cb) ->
         if @facts.length < 1 then return cb null
         # @todo: any way to move this out of here?
