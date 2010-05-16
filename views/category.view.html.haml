@@ -1,21 +1,44 @@
 %h2= category.name
 
 - if (category.parent)
-  %strong= "Parent"
-  %a{ href: "/category/" + category.parent.slug, title: "Go to category " + category.parent.name }= category.parent.name
+  %p
+    %strong= "Parent"
+    %a{ href: "/category/" + category.parent.slug, title: "Go to category " + category.parent.name }= category.parent.name
 
-- if (category.children.length > 0)
-  %strong= "Subcategories"
+%strong= "Subcategories"
+%ul#categories
   - each child in category.children
-    %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= child.name
+    %li
+      %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= child.name
+      - if (child.facts.length > 0)
+        %span.num_facts= "[" + child.facts.length + " fact(s)]"
+%form{ method: "post", action: "/category", id: 'category_form' }
+  %input{ type: 'hidden', name: '_method', value: 'put' }
+  %input{ type: 'hidden', name: 'parent', value: category.key }
+  %fieldset
+    %ul
+      %li
+        %label{ for: "name" } Name:
+        %input{ type: 'text', name: 'name', class: 'text_input' }
+      %li
+        %input{ type: 'submit', value: 'Create' }
 
-- if (category.facts.length > 0)
-  %h3= "Facts"
-  %ul
-    - each fact in category.facts
-      %li{ id: fact.key }
-        = fact.content
-        %a.fact_delete{ href: "#", title: "Delete this fact" }= "[del]"
+%h3= "Facts"
+%ul#facts
+  - each fact in category.facts
+    %li{ id: fact.key }
+      = fact.content
+      %a.fact_delete{ href: "#", title: "Delete this fact" }= "[del]"
+%form{ method: "post", action: "/fact", id: 'fact_form' }
+  %input{ type: 'hidden', name: '_method', value: 'put' }
+  %input{ type: 'hidden', name: 'category', value: category.key }
+  %fieldset
+    %ul
+      %li
+        %label{ for: "content" } Content:
+        %textarea{ name: 'content', class: 'text_input' }
+      %li
+        %input{ type: 'submit', value: 'Create' }
 
 - if (category.children.length > 0)
   - each child in category.children

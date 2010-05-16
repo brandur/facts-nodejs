@@ -1,14 +1,31 @@
 $().ready(function() {
 
     $("#category_form").ajaxForm({
-        //clearForm: true, 
         dataType: "json", 
         resetForm: true, 
         success: function(data) {
             if (data.err === undefined) {
-                $("#new_result").html(data.slug);
+                $("#categories").append('<li><a href="/category/' + data.slug + '" title="Go to ' + data.name + '">' + data.name + '</a></li>');
+                $("#categories").children(":last").hide().slideDown("fast", function() {
+                    $("#categories").children(":last").css("display", "");
+                });
             } else {
-                $("#new_result").html(data.err);
+                $("#flash").html(data.err);
+            }
+        }
+    });
+
+    $("#fact_form").ajaxForm({
+        dataType: "json", 
+        resetForm: true, 
+        success: function(data) {
+            if (data.err === undefined) {
+                $("#facts").append("<li>" + data.content + "</li>");
+                $("#facts").children(":last").hide().slideDown("fast", function() {
+                    $("#facts").children(":last").css("display", "");
+                });
+            } else {
+                $("#flash").html(data.err);
             }
         }
     });

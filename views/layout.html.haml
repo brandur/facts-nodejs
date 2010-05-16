@@ -9,5 +9,9 @@
     %script{ src: '/public/js/common.js', type: 'text/javascript' }
   %body
     #wrapper
+      #flash
+      %ul
+        %li
+          %a{ href: "/category", title: "Go to all categories" }= "All"
       != body
 

@@ -36,29 +36,51 @@ get "/public/css/*.css", (file) ->
         else 
             @render file + ".css.sass", { layout: no }
 
-get "/category", ->
+get "/category.json", ->
     Category.recursive redis.ds(), (err, categories) =>
         respondWithJSON this, -> 
             if err then error err else categories
 
+get "/category", ->
+    Category.recursive redis.ds(), (err, categories) =>
+        # @todo: handle error
+        @render "category.html.haml", {
+            locals: {
+                title: 'Categories', 
+                categories: categories
+            }
+        }
+
 put "/category", ->
-    insert: =>
-        category.insert redis.ds(), (err) =>
-            respondWithJSON this, ->
-                if err then error err else category
     name: @param "name"
     if not name then return respondWithError this, "need parameter 'name'"
-    parentName: @param "parent_name"
+    parent: @param "parent"
+    if not parent then return respondWithError this, "need parameter 'parent'"
     category: Category.make name
-    if not parentName
-        insert()
-    else
-        Category.findByName redis.ds(), parentName, (err, parent) =>
-            if err then return respondWithJSON this, -> error err
-            if not parent then return respondWithJSON this, -> 
-                error "no such parent category"
-            category.parent = parent.key
+    category.parent: parent
+    category.insert redis.ds(), (err) =>
+        respondWithJSON this, ->
+            if err then error err else category
+
+commented: ->
+    put "/category", ->
+        insert: =>
+            category.insert redis.ds(), (err) =>
+                respondWithJSON this, ->
+                    if err then error err else category
+        name: @param "name"
+        if not name then return respondWithError this, "need parameter 'name'"
+        parentName: @param "parent_name"
+        category: Category.make name
+        if not parentName
             insert()
+        else
+            Category.findByName redis.ds(), parentName, (err, parent) =>
+                if err then return respondWithJSON this, -> error err
+                if not parent then return respondWithJSON this, -> 
+                    error "no such parent category"
+                category.parent = parent.key
+                insert()
 
 get "/category/all", ->
     Category.all redis.ds(), (err, categories) =>
@@ -104,6 +126,18 @@ get "/category/*", (slug) ->
                             category: category
                         }
                     }
+
+put "/fact", ->
+    content: @param "content"
+    if not content then return respondWithError this, "need parameter 'content'"
+    category: @param "category"
+    if not category then return respondWithError this, "need parameter 'category'"
+    fact: Fact.make content
+    fact.categories.push category
+    fact.insert redis.ds(), (err) =>
+        respondWithJSON this, ->
+            if err then error err else fact
+
 get "/fact/:key.json", (key) ->
     Fact.findByKey redis.ds(), key, (err, fact) =>
         respondWithJSON this, ->

@@ -126,5 +126,13 @@ class Fact
                     cb null, facts
         start()
 
+    #
+    # Private ----
+    #
+
+    @sort: (facts) ->
+        facts.sort (a, b) ->
+            a.createdAt - b.createdAt
+
 exports.Fact: Fact
 

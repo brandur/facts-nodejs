@@ -4,3 +4,6 @@
 [submodule "support/redis-node-client"]
 	path = support/redis-node-client
 	url = http://github.com/fictorial/redis-node-client.git
+[submodule "support/node-discount"]
+	path = support/node-discount
+	url = http://github.com/visionmedia/node-discount.git

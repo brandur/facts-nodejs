@@ -74,6 +74,7 @@ class Category
     loadChildren: (ds, cb) ->
         if @children.length < 1 then return cb null
         Category.findByKeys ds, @children, errw cb, (categories) =>
+            Category.sort categories
             @children: categories
             cb null
 
@@ -98,6 +99,7 @@ class Category
         # @todo: any way to move this out of here?
         Fact: require("../models/fact").Fact
         Fact.findByKeys ds, @facts, errw cb, (facts) =>
+            Fact.sort facts
             @facts: facts
             cb null
 
@@ -143,17 +145,22 @@ class Category
             if not keys then return cb null, null
             keys: k.toString() for k in keys
             Category.findByKeys ds, keys, errw2 cb, (categories) ->
+                Category.sort categories
                 cb null, categories
 
     @recursive: (ds, cb) ->
         Category.root ds, errw2 cb, (categories) ->
-            Category.loadCategories ds, categories, 0, cb
+            Category.loadCategories ds, categories, 0, 
+                errw2 cb, (categories) ->
+                    Category.sort categories
+                    cb null, categories
 
     @root: (ds, cb) ->
         ds.smembers "category:root", errw2 cb, (keys) ->
             if not keys then return cb null, null
             keys: k.toString() for k in keys
             Category.findByKeys ds, keys, errw2 cb, (categories) ->
+                Category.sort categories
                 cb null, categories
 
     #
@@ -251,6 +258,13 @@ class Category
                 loadCategories ds, categories, i+1, 
                     errw2 cb, (categories) ->
                         cb null, categories
+
+    @sort: (categories) ->
+        categories.sort (a, b) ->
+            aName = a.name.toLowerCase()
+            bName = b.name.toLowerCase()
+            if aName > bName then 1 else 
+                if aName is bName then 0 else -1
 
 exports.Category: Category
 
