@@ -1,4 +1,8 @@
-%h1= category.name
+%h2= category.name
+
+- if (category.parent)
+  %strong= "Parent"
+  %a{ href: "/category/" + category.parent.slug, title: "Go to category " + category.parent.name }= category.parent.name
 
 - if (category.children.length > 0)
   %strong= "Subcategories"
@@ -6,7 +10,7 @@
     %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= child.name
 
 - if (category.facts.length > 0)
-  %h2= "Facts"
+  %h3= "Facts"
   %ul
     - each fact in category.facts
       %li{ id: fact.key }
@@ -17,7 +21,7 @@
   - each child in category.children
     - if (child.facts.length > 0)
       %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }
-        %h3= child.name
+        %h4= child.name
       %ul
         - each fact in child.facts
           %li{ id: fact.key }= fact.content

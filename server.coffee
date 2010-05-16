@@ -96,13 +96,14 @@ get "/category/*", (slug) ->
     Category.findBySlug ds, slug, (err, category) =>
         # @todo: check for error
         category.loadFacts ds, (err) =>
-            category.loadChildrenWithFacts ds, (err) =>
-                @render "category.view.html.haml", {
-                    locals: {
-                        title: "$category.name ($category.slug)", 
-                        category: category
+            category.loadParent ds, (err) =>
+                category.loadChildrenWithFacts ds, (err) =>
+                    @render "category.view.html.haml", {
+                        locals: {
+                            title: "$category.name ($category.slug)", 
+                            category: category
+                        }
                     }
-                }
 
 del "/fact/:key", (key) ->
     ds: redis.ds()

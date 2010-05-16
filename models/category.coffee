@@ -101,6 +101,12 @@ class Category
             @facts: facts
             cb null
 
+    loadParent: (ds, cb) ->
+        if not @parent then return cb null
+        Category.findByKey ds, @parent, errw cb, (parent) =>
+            @parent: parent
+            cb null
+
     #
     # Serialization ----
     #
