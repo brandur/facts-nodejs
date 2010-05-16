@@ -16,5 +16,18 @@ $().ready(function() {
     $("#parent_name").autocomplete("/category/search/", {
     });
 
+    $("a.fact_delete").click(function() {
+        var item = $(this).parent();
+        $.post(
+            "/fact/" + item.attr("id"), 
+            { "_method": "delete" }, 
+            function(data) {
+                if (data.msg === "OK")
+                    item.slideUp();
+            }, 
+            "json"
+        );
+    });
+
 });
 

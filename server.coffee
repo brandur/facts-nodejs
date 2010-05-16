@@ -21,8 +21,9 @@ configure ->
     use MethodOverride
     use Static
 
-process.addListener "uncaughtException", (err) ->
-    sys.error "Caught exception: " + err
+comment: ->
+    process.addListener "uncaughtException", (err) ->
+        sys.error "Caught exception: " + err
 
 #
 # Routes ----
@@ -102,6 +103,18 @@ get "/category/*", (slug) ->
                         category: category
                     }
                 }
+
+del "/fact/:key", (key) ->
+    ds: redis.ds()
+    Fact.findByKey ds, key, (err, fact) =>
+        if err then return respondWithJSON this, -> error err
+        fact.destroy ds, (err) =>
+            respondWithJSON this, ->
+                if err then error err else { "msg": "OK" }
+
+post "/fact/:key", (key) ->
+    sys.puts "got post"
+    respondWithJSON this, -> { "msg": OK }
 
 #
 # Private ----

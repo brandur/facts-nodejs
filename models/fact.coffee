@@ -57,17 +57,17 @@ class Fact
                             addCategories categories
         start()
 
-    remove: (ds, cb) ->
+    destroy: (ds, cb) ->
         # S1: start recursive category removal
         start: =>
-            if not @key then return cb new Error "need primary key to delete"
+            if not @key then return cb new Error "need primary key to destroy"
             removeCategories @categories
         # S2: remove this fact from each of its categories' sets, then delete 
         # each of its fields
         removeCategories: (categories) =>
             category = categories.shift()
             if not category 
-                return model.remove ds, "fact", Fact.members(), [@key], cb
+                return model.destroy ds, "fact", Fact.members(), [@key], cb
             ds.srem "category:$category:facts", @key, errw cb, (reply) =>
                 removeCategories categories
         start()

@@ -9,8 +9,37 @@ exports.factTests: -> [
     testFactInsertWithManyCategories
     testFactInsertWithBadCategory
     testFactInsertWithNoCategories
-    testFactRemove
+    testFactDestroy
+    testFactFindByKeys
+    testFactFindByKey
 ]
+
+testFactFindByKey: (ds, cb) ->
+    category: Category.make "science"
+    category.insert ds, (err) ->
+        assert.ok not err
+        fact: Fact.make "science is fun!"
+        fact.categories.push category.key
+        fact.insert ds, (err) ->
+            assert.ok not err
+            Fact.findByKey ds, fact.key, (err, fact2) ->
+                assert.ok not err
+                assert.ok fact2.name is fact.name
+                cb()
+
+testFactFindByKeys: (ds, cb) ->
+    category: Category.make "science"
+    category.insert ds, (err) ->
+        assert.ok not err
+        fact: Fact.make "science is fun!"
+        fact.categories.push category.key
+        fact.insert ds, (err) ->
+            assert.ok not err
+            Fact.findByKeys ds, [fact.key], (err, facts) ->
+                assert.ok not err
+                assert.ok facts.length is 1
+                assert.ok facts[0].name is fact.name
+                cb()
 
 testFactInsert: (ds, cb) ->
     category: Category.make "science"
@@ -51,7 +80,7 @@ testFactInsertWithNoCategories: (ds, cb) ->
         assert.ok err isnt null
         cb()
 
-testFactRemove: (ds, cb) ->
+testFactDestroy: (ds, cb) ->
     category: Category.make "science"
     category.insert ds, (err) ->
         assert.ok not err
@@ -59,7 +88,7 @@ testFactRemove: (ds, cb) ->
         fact.categories.push category.key
         fact.insert ds, (err) ->
             assert.ok not err
-            fact.remove ds, (err) ->
+            fact.destroy ds, (err) ->
                 assert.ok not err
                 ds.keys "fact:*", (err, reply) ->
                     assert.ok not err and not reply

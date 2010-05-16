@@ -2,7 +2,7 @@ redis: require "../lib/redis"
 
 sys:  require "sys"
 
-exports.remove: (ds, type, fields, keys, cb) ->
+exports.destroy: (ds, type, fields, keys, cb) ->
     args = makeArgs type, fields, keys
     redis.command ds, "del", args, (err, reply) ->
         cb err
