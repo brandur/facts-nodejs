@@ -104,6 +104,10 @@ get "/category/*", (slug) ->
                             category: category
                         }
                     }
+get "/fact/:key.json", (key) ->
+    Fact.findByKey redis.ds(), key, (err, fact) =>
+        respondWithJSON this, ->
+            if err then error err else fact
 
 del "/fact/:key", (key) ->
     ds: redis.ds()
