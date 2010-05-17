@@ -2,15 +2,21 @@ assert: require "assert"
 
 Category: require("../models/category").Category
 
+# @todo: put in an actual BDD test suite
+describe: require("sys").puts
+it:       (s) -> require("sys").print "    $s"
+
 exports.categoryTests: -> [
+    testCategoryExists
     testCategoryInsert
     testCategoryInsertDuplicate
-    testCategoryExists
     testCategoryInsertWithParent
     testCategoryInsertWithBadParent
 ]
 
 testCategoryExists: (ds, cb) ->
+    describe "Category.exists"
+    it "should test existence correctly"
     Category.exists ds, "bad-category-key", (err, exists) ->
         assert.ok exists is false
         category = Category.make "science"
@@ -21,6 +27,8 @@ testCategoryExists: (ds, cb) ->
                 cb()
 
 testCategoryInsert: (ds, cb) ->
+    describe "Category.insert"
+    it "should create correctly given good parameters"
     category = Category.make "science"
     assert.ok category.parent is undefined
     category.insert ds, (err) ->
@@ -31,6 +39,7 @@ testCategoryInsert: (ds, cb) ->
         cb()
 
 testCategoryInsertDuplicate: (ds, cb) ->
+    it "should fail if we insert a duplicate slug"
     category = Category.make "science"
     category.insert ds, (err) ->
         assert.ok not err
@@ -40,6 +49,7 @@ testCategoryInsertDuplicate: (ds, cb) ->
             cb()
 
 testCategoryInsertWithParent: (ds, cb) ->
+    it "should create correctly given a parent category"
     parent = Category.make "science"
     parent.insert ds, (err) ->
         assert.ok not err
@@ -50,6 +60,7 @@ testCategoryInsertWithParent: (ds, cb) ->
             cb()
 
 testCategoryInsertWithBadParent: (ds, cb) ->
+    it "should fail given a non-existent parent"
     category = Category.make "orphaned"
     category.parent = "bad-parent-key"
     category.insert ds, (err) ->

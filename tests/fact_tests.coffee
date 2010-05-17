@@ -4,6 +4,10 @@ sys:    require "sys"
 Category: require("../models/category").Category
 Fact:     require("../models/fact").Fact
 
+# @todo: put in an actual BDD test suite
+describe: require("sys").puts
+it:       (s) -> require("sys").print "    $s"
+
 exports.factTests: -> [
     testFactInsert
     testFactInsertWithManyCategories
@@ -15,6 +19,8 @@ exports.factTests: -> [
 ]
 
 testFactFindByKey: (ds, cb) ->
+    describe "Fact.findByKey"
+    it "should find a fact given its primary key"
     category: Category.make "science"
     category.insert ds, (err) ->
         assert.ok not err
@@ -28,6 +34,8 @@ testFactFindByKey: (ds, cb) ->
                 cb()
 
 testFactFindByKeys: (ds, cb) ->
+    describe "Fact.findByKeys"
+    it "should find many facts given many primary keys"
     category: Category.make "science"
     category.insert ds, (err) ->
         assert.ok not err
@@ -42,6 +50,8 @@ testFactFindByKeys: (ds, cb) ->
                 cb()
 
 testFactInsert: (ds, cb) ->
+    describe "Fact.insert"
+    it "should create correctly given good parameters"
     category: Category.make "science"
     category.insert ds, (err) ->
         assert.ok not err
@@ -54,6 +64,7 @@ testFactInsert: (ds, cb) ->
             cb()
 
 testFactInsertWithManyCategories: (ds, cb) ->
+    it "should create correctly given multiple categories"
     fact: Fact.make "science & art are fun!"
     science: Category.make "science"
     science.insert ds, (err) ->
@@ -68,6 +79,7 @@ testFactInsertWithManyCategories: (ds, cb) ->
                 cb()
 
 testFactInsertWithBadCategory: (ds, cb) ->
+    it "should fail given a non-existent category"
     fact: Fact.make "science is fun!"
     fact.categories.push "bad-category-key"
     fact.insert ds, (err) ->
@@ -75,12 +87,15 @@ testFactInsertWithBadCategory: (ds, cb) ->
         cb()
 
 testFactInsertWithNoCategories: (ds, cb) ->
+    it "should fail given no category"
     fact: Fact.make "science is fun!"
     fact.insert ds, (err) ->
         assert.ok err isnt null
         cb()
 
 testFactDestroy: (ds, cb) ->
+    describe "Fact.destroy"
+    it "should remove all traces of the destroyed fact"
     category: Category.make "science"
     category.insert ds, (err) ->
         assert.ok not err

@@ -99,7 +99,7 @@ get "/category/search", ->
     if not name then return @respond 500, "need parameter 'q'"
     limit: @param(name) or -1
     Category.findByPartialName redis.ds(), name, limit, (err, categories) =>
-        if err then return respond 500, err
+        if err then return @respond 500, err
         @contentType "text"
         @respond 200, (c.name for c in categories).join("\n")
 

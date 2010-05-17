@@ -9,7 +9,6 @@ sys:    require "sys"
 runTests: (tests, cb) ->
     if tests.length < 1 then return cb()
     test: tests.shift()
-    sys.puts "Running test: " + test.name
     ds: redis.createClient()
     ds.select 13, (err, reply) ->
         if err then assert.fail err, "select test database"
@@ -18,6 +17,7 @@ runTests: (tests, cb) ->
             if err then assert.fail err, "flush test database"
             assert.ok reply, "flush test database"
             test ds, ->
+                sys.puts " ... OK!"
                 ds.close()
                 runTests tests, cb
 

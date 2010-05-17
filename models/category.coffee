@@ -49,7 +49,7 @@ class Category
                 if reply is 0 then return cb(
                     new Error "category with that slug already exists"
                 )
-                ds.set "category:name:$@name", @key, errw cb, (reply) =>
+                ds.sadd "category:name:$@name", @key, errw cb, (reply) =>
                     if not @parent then addToRootSet() else addToParentSet()
         # S3a: indicate that this a root-level category by adding it to the 
         # root set. This occurs only if there is no parent.
@@ -203,20 +203,28 @@ class Category
                                     cb null, categories
         start()
 
-    @findByName: (ds, name, cb) ->
-        ds.get "category:name:$name", errw2 cb, (reply) ->
-           if not reply then return cb null, null
-           Category.findByKey ds, reply.toString(), cb
+    # @todo: possibly get rid of this
+    @findByName: (ds, name, parent, cb) ->
+        ds.smembers "category:name:$name", errw2 cb, (keys) ->
+            if not keys then return cb null, null
+            keys: keys.toString() for k in keys
+            Category.findByKeys ds, keys, errw2 cb, (categories) ->
+                for category in categories
+                    if category.parent is parent or 
+                        (not category.parent and not parent)
+                            return cb null, category
+                cb null, null
 
     @findByPartialName: (ds, name, limit, cb) ->
         # Redis treats '*' as a wildcard, this is our only tool for searching
         ds.keys "category:name:*$name*", errw2 cb, (keys) ->
+            if not keys then sys.puts "no keys"
             if not keys then return cb null, []
             # hopefully we won't have to split() on this in the future
             keys: keys.toString().split(" ")
             if limit > 0 and keys.length > limit
                 keys: keys.slice 0, limit
-            redis.command ds, "mget", keys, errw2 cb, (keys) ->
+            redis.command ds, "sunion", keys, errw2 cb, (keys) ->
                 keys: k.toString() for k in keys
                 Category.findByKeys ds, keys, errw2 cb, (categories) ->
                     cb null, categories
@@ -228,7 +236,7 @@ class Category
         start: ->
             path = fullPath[0...fullPath.length]
             root = path.shift()
-            Category.findByName ds, root, errw2 cb, (category) ->
+            Category.findByName ds, root, null, errw2 cb, (category) ->
                 findDescendant path, category, cb
         findDescendant: (path, category, cb) ->
             if path.length < 1 then return cb null, category
@@ -254,8 +262,8 @@ class Category
         if i >= categories.length then return cb null, categories
         category: categories[i]
         category.loadChildren ds, ->
-            loadCategories ds, category.children, 0, errw2 cb, (x) ->
-                loadCategories ds, categories, i+1, 
+            Category.loadCategories ds, category.children, 0, errw2 cb, (x) ->
+                Category.loadCategories ds, categories, i+1, 
                     errw2 cb, (categories) ->
                         cb null, categories
 
