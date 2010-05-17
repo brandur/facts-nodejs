@@ -9,6 +9,7 @@ describe: require("sys").puts
 it:       (s) -> require("sys").print "    $s"
 
 exports.factTests: -> [
+    testFactContentHtml
     testFactInsert
     testFactInsertWithManyCategories
     testFactInsertWithBadCategory
@@ -17,6 +18,13 @@ exports.factTests: -> [
     testFactFindByKeys
     testFactFindByKey
 ]
+
+testFactContentHtml: (ds, cb) ->
+    describe "Fact.contentHtml"
+    it "should format the content field to HTML"
+    fact: Fact.make "some fact with *emphasized content*"
+    assert.ok fact.contentHtml().indexOf("<em>emphasized content</em>") isnt  -1
+    cb()
 
 testFactFindByKey: (ds, cb) ->
     describe "Fact.findByKey"

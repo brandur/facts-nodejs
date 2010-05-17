@@ -27,7 +27,7 @@
 %ul#facts
   - each fact in category.facts
     %li{ id: fact.key }
-      = fact.content
+      != fact.contentHtml()
       %a.fact_delete{ href: "#", title: "Delete this fact" }= "[del]"
 %form{ method: "post", action: "/fact", id: 'fact_form' }
   %input{ type: 'hidden', name: '_method', value: 'put' }
@@ -47,7 +47,7 @@
         %h4= child.name
       %ul
         - each fact in child.facts
-          %li{ id: fact.key }= fact.content
+          %li{ id: fact.key }!= fact.contentHtml()
       - if (child.children.length > 0)
         %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= "+ " + child.children.length + " subcategor(ies)"
 

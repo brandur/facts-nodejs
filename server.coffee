@@ -1,4 +1,5 @@
 require.paths.unshift "./support/express/lib"
+require.paths.unshift "./support/node-discount/build/default"
 require.paths.unshift "./support/redis-node-client/lib"
 
 require "express"
@@ -61,26 +62,6 @@ put "/category", ->
     category.insert redis.ds(), (err) =>
         respondWithJSON this, ->
             if err then error err else category
-
-commented: ->
-    put "/category", ->
-        insert: =>
-            category.insert redis.ds(), (err) =>
-                respondWithJSON this, ->
-                    if err then error err else category
-        name: @param "name"
-        if not name then return respondWithError this, "need parameter 'name'"
-        parentName: @param "parent_name"
-        category: Category.make name
-        if not parentName
-            insert()
-        else
-            Category.findByName redis.ds(), parentName, (err, parent) =>
-                if err then return respondWithJSON this, -> error err
-                if not parent then return respondWithJSON this, -> 
-                    error "no such parent category"
-                category.parent = parent.key
-                insert()
 
 get "/category/all", ->
     Category.all redis.ds(), (err, categories) =>

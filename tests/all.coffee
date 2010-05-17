@@ -1,3 +1,4 @@
+require.paths.unshift "./support/node-discount/build/default"
 require.paths.unshift "./support/redis-node-client/lib"
 
 assert: require "assert"

@@ -1,3 +1,4 @@
+md:    require "markdown"
 model: require "../lib/model"
 redis: require "../lib/redis"
 sys:   require "sys"
@@ -23,6 +24,9 @@ class Fact
     #
     # Properties ----
     #
+
+    contentHtml: ->
+        md.parse @content
 
     excerpt: ->
         @content[0...20] + " ..."
