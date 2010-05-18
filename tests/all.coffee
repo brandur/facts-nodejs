@@ -29,6 +29,7 @@ allTests:
     [].concat(
         require("./category_tests").categoryTests()
         require("./fact_tests").factTests()
+        require("./util_tests").utilTests()
     )
 
 sys.puts line()

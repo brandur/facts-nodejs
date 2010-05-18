@@ -4,6 +4,7 @@ require.paths.unshift "./support/redis-node-client/lib"
 
 require "express"
 require "express/plugins"
+require "./lib/util"
 
 path:  require "path"
 redis: require "./lib/redis"
@@ -53,9 +54,9 @@ get "/category", ->
         }
 
 put "/category", ->
-    name: @param "name"
+    name: sanitize @param "name"
     if not name then return respondWithError this, "need parameter 'name'"
-    parent: @param "parent"
+    parent: sanitize @param "parent"
     if not parent then return respondWithError this, "need parameter 'parent'"
     category: Category.make name
     category.parent: parent
@@ -76,7 +77,7 @@ get "/category/new", ->
     }
 
 get "/category/search", ->
-    name: @param "q"
+    name: sanitize @param "q"
     if not name then return @respond 500, "need parameter 'q'"
     limit: @param(name) or -1
     Category.findByPartialName redis.ds(), name, limit, (err, categories) =>
@@ -109,9 +110,9 @@ get "/category/*", (slug) ->
                     }
 
 put "/fact", ->
-    content: @param "content"
+    content: sanitize @param "content"
     if not content then return respondWithError this, "need parameter 'content'"
-    category: @param "category"
+    category: sanitize @param "category"
     if not category then return respondWithError this, "need parameter 'category'"
     fact: Fact.make content
     fact.categories.push category
