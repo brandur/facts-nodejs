@@ -1,3 +1,4 @@
+require.paths.unshift "./support/node-discount/build/default"
 require.paths.unshift "./support/redis-node-client/lib"
 
 fs:    require "fs"
@@ -57,7 +58,7 @@ line: ->
     new Array(79).join("-")
 
 main: ->
-    data: fs.readFileSync "./tools/fixtures.json"
+    data: fs.readFileSync "./tools/fixtures.json", "utf8"
     fixtures: eval data
     ds: redis.ds()
     sys.puts line()

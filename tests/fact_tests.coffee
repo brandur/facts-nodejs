@@ -17,6 +17,7 @@ exports.factTests: -> [
     testFactDestroy
     testFactFindByKeys
     testFactFindByKey
+    testFactMove
 ]
 
 testFactContentHtml: (ds, cb) ->
@@ -118,4 +119,32 @@ testFactDestroy: (ds, cb) ->
                     ds.smembers "category:$category.key:facts", (err, reply) ->
                         assert.ok not err and not reply
                         cb()
+
+testFactMove: (ds, cb) ->
+    describe "Fact.move"
+    it "should move a fact from one category to another"
+    science: Category.make "science"
+    science.insert ds, (err) ->
+        assert.ok not err
+        math: Category.make "math"
+        math.insert ds, (err) ->
+            assert.ok not err
+            fact: Fact.make "Pi is 3.14"
+            fact.categories.push science.key
+            fact.insert ds, (err) ->
+                assert.ok not err
+                Fact.move ds, fact.key, science.key, math.key, (err) ->
+                    assert.ok not err
+                    Fact.findByKey ds, fact.key, (err, fact) ->
+                        assert.ok not err
+                        assert.ok fact.categories.length is 1
+                        assert.ok fact.categories[0] is math.key
+                        Category.findByKey ds, science.key, (err, science) ->
+                            assert.ok not err
+                            assert.ok science.facts.length is 0
+                            Category.findByKey ds, math.key, (err, math) ->
+                                assert.ok not err
+                                assert.ok math.facts.length is 1
+                                assert.ok math.facts[0] is fact.key
+                                cb()
 

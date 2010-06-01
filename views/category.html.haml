@@ -1,0 +1,13 @@
+%h2= "Categories"
+
+- if (categories.length > 0)
+  %ul
+    - each category in categories
+      %li
+        %a{ href: "/category/" + category.slug, title: "Go to category " + category.name }= category.name
+        - if (category.children.length > 0)
+          %ul
+            - each child in category.children
+              %li
+                %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= child.name
+

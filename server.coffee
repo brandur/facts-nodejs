@@ -32,6 +32,7 @@ comment: ->
 #
 
 get "/public/css/*.css", (file) ->
+    # @todo: fix possible security hole
     path.exists __dirname + @url.pathname, (exists) =>
         if exists 
             @sendfile __dirname + @url.pathname 
@@ -79,24 +80,29 @@ get "/category/new", ->
 get "/category/search", ->
     name: sanitize @param "q"
     if not name then return @respond 500, "need parameter 'q'"
-    limit: @param(name) or -1
+    limit: @param("limit") or -1
+    if typeof limit isnt "number"
+        return @respond 500, "parameter 'limit' must be a number"
     Category.findByPartialName redis.ds(), name, limit, (err, categories) =>
         if err then return @respond 500, err
         @contentType "text"
         @respond 200, (c.name for c in categories).join("\n")
 
 get "/category/search/:name", (name) ->
+    name: sanitize name
     Category.findByPartialName redis.ds(), name, -1, (err, categories) =>
         respondWithJSON this, ->
             if err then error err else categories
 
 get "/category/*.json", (slug) ->
+    slug: sanitize slug
     Category.findBySlug redis.ds(), slug, (err, category) =>
         respondWithJSON this, ->
             if err then error err else category
 
 get "/category/*", (slug) ->
     ds: redis.ds()
+    slug: sanitize slug
     Category.findBySlug ds, slug, (err, category) =>
         # @todo: check for error
         category.loadFacts ds, (err) =>
@@ -120,13 +126,30 @@ put "/fact", ->
         respondWithJSON this, ->
             if err then error err else fact
 
+post "/fact/move/:key", (key) ->
+    ds: redis.ds()
+    key: sanitize key
+    oldCategory: sanitize @param "old_category"
+    if not oldCategory then return respondWithParamError this, "old_category"
+    newCategory: sanitize @param "new_category"
+    if not newCategory then return respondWithParamError this, "new_category"
+    Fact.exists ds, key, (err, exists) =>
+        if err then return respondWithJSON this, -> error err
+        if not exists 
+            return respondWithError this, "no fact with key '$key'"
+        Fact.move ds, key, oldCategory, newCategory, (err) =>
+            respondWithJSON this, ->
+                if err then error err else { "msg": "OK" }
+
 get "/fact/:key.json", (key) ->
+    key: sanitize key
     Fact.findByKey redis.ds(), key, (err, fact) =>
         respondWithJSON this, ->
             if err then error err else fact
 
 del "/fact/:key", (key) ->
     ds: redis.ds()
+    key: sanitize key
     Fact.findByKey ds, key, (err, fact) =>
         if err then return respondWithJSON this, -> error err
         fact.destroy ds, (err) =>
@@ -142,6 +165,9 @@ error: (err) ->
 
 respondWithError: (express, msg) ->
     respondWithJSON express, -> error new Error(msg)
+
+respondWithParamError: (express, param) ->
+    respondWithError express, "need parameter '$param'"
 
 respondWithJSON: (express, callback) ->
     express.contentType "text"

@@ -106,6 +106,10 @@ class Fact
     # Find ----
     #
 
+    @exists: (ds, key, cb) ->
+        ds.exists "fact:$key:content", errw2 cb, (reply) ->
+            cb null, reply is 1
+
     @findByKey: (ds, key, cb) ->
         Fact.findByKeys ds, [key], errw2 cb, (facts) ->
             cb null, facts[0]
@@ -128,6 +132,26 @@ class Fact
                 collector.push fact
                 loadCollections ds, facts, collector, errw2 cb, (facts) ->
                     cb null, facts
+        start()
+
+    @move: (ds, key, oldCat, newCat, cb) ->
+        start: ->
+            Fact.exists ds, key, errw2 cb, (exists) ->
+                if not exists 
+                    return cb new Error "fact $key does not exist"
+                Category.exists ds, oldCat, errw2 cb, (exists) ->
+                    if not exists 
+                        return cb new Error "category $oldCat does not exist"
+                    Category.exists ds, newCat, errw2 cb, (exists) ->
+                        if not exists 
+                            return cb new Error "category $newCat does not exist"
+                        move()
+        move: ->
+            ds.sadd "fact:$key:categories", newCat, errw2 cb, (reply) ->
+                ds.sadd "category:$newCat:facts", key, errw2 cb, (reply) ->
+                    ds.srem "fact:$key:categories", oldCat, errw2 cb, (reply) ->
+                        ds.srem "category:$oldCat:facts", key, errw2 cb, (reply) ->
+                            cb null
         start()
 
     #

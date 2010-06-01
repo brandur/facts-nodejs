@@ -24,7 +24,7 @@
         %input{ type: 'submit', value: 'Create' }
 
 %h3= "Facts"
-%ul#facts
+%ul.facts{ id: category.key }
   - each fact in category.facts
     %li{ id: fact.key }
       != fact.contentHtml()
@@ -42,12 +42,13 @@
 
 - if (category.children.length > 0)
   - each child in category.children
-    - if (child.facts.length > 0)
-      %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }
-        %h4= child.name
-      %ul
-        - each fact in child.facts
-          %li{ id: fact.key }!= fact.contentHtml()
-      - if (child.children.length > 0)
-        %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= "+ " + child.children.length + " subcategor(ies)"
+    %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }
+      %h4= child.name
+    %ul.child_facts{ id: child.key }
+      - each fact in child.facts
+        %li{ id: fact.key }
+          != fact.contentHtml()
+          %a.fact_delete{ href: "#", title: "Delete this fact" }= "[del]"
+    - if (child.children.length > 0)
+      %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }= "+ " + child.children.length + " subcategor(ies)"
 

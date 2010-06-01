@@ -218,7 +218,6 @@ class Category
     @findByPartialName: (ds, name, limit, cb) ->
         # Redis treats '*' as a wildcard, this is our only tool for searching
         ds.keys "category:name:*$name*", errw2 cb, (keys) ->
-            if not keys then sys.puts "no keys"
             if not keys then return cb null, []
             # hopefully we won't have to split() on this in the future
             keys: keys.toString().split(" ")
