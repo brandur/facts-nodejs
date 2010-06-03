@@ -44,7 +44,7 @@
   - each child in category.children
     %a{ href: "/category/" + child.slug, title: "Go to category " + child.name }
       %h4= child.name
-    %ul.child_facts{ id: child.key }
+    %ul.facts{ id: child.key }
       - each fact in child.facts
         %li{ id: fact.key }
           != fact.contentHtml()

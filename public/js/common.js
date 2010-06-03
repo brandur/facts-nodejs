@@ -48,7 +48,7 @@ $().ready(function() {
         );
     });
 
-    $(".facts,.child_facts").droppable({
+    $(".facts").droppable({
         accept: function(draggable) {
             return draggable.parent().attr("id") != $(this).attr("id");
         }, 
