@@ -44,7 +44,8 @@ class Fact
                 new Error "a fact must belong to at least one category"
             )
             model.save ds, "fact", @toFields(), errw cb, (reply) =>
-                addCategories @categories[0...@categories.length]
+                ds.sadd "fact:all", @key, errw cb, (reply) =>
+                    addCategories @categories[0...@categories.length]
         # S2: add each category to this fact's set, and add the fact to that 
         # category's facts set. This function calls itself recursively in 
         # order to add all categories.
