@@ -1,6 +1,8 @@
 require.paths.unshift "./support/node-discount/build/default"
 require.paths.unshift "./support/redis-node-client/lib"
 
+require "../lib/async"
+
 fs:    require "fs"
 redis: require "../lib/redis"
 sys:   require "sys"
@@ -8,12 +10,14 @@ sys:   require "sys"
 Category: require("../models/category").Category
 Fact:     require("../models/fact").Fact
 
-addCategories: (ds, categories, parent, cb) ->
-    category = categories.shift()
-    if not category then return cb()
-    addCategory ds, category, parent, ->
-        addCategories ds, categories, parent, ->
-            cb()
+addCategories: (ds, categories, parent, next) ->
+    map categories, 
+        ((category, next) ->
+            addCategory ds, category, parent, ->
+                next category
+        ), 
+        (categories) ->
+            next()
 
 addCategory: (ds, category, parent, cb) ->
     category2 = Category.make category.name
@@ -27,29 +31,34 @@ addCategory: (ds, category, parent, cb) ->
         else
             cb()
 
-addFacts: (ds, facts, cb) ->
-    fact = facts.shift()
-    if not fact then return cb()
-    addFact ds, fact, ->
-        addFacts ds, facts, cb
+addFacts: (ds, facts, next) ->
+    map facts, 
+        ((fact, next) ->
+            addFact ds, fact, ->
+                next fact
+        ), 
+        (facts) ->
+            next()
 
-addFact: (ds, fact, cb) ->
+addFact: (ds, fact, next) ->
     start: ->
-        findCategories fact.categories, [], (categories) ->
+        findCategories fact.categories, (categories) ->
             fact2 = Fact.make fact.content
             fact2.categories = c.key for c in categories
             fact2.insert ds, (err) ->
                 if err then throw err
                 excerpt: fact2.excerpt()
                 sys.puts "Inserted fact '$excerpt' for $categories.length categor(ies)"
-                cb()
-    findCategories: (paths, categories, cb) ->
-        path = paths.shift()
-        if not path then return cb categories
-        Category.findByPath ds, path, (err, category) ->
-            if err then throw err
-            categories.push category
-            findCategories paths, categories, cb
+                next()
+    findCategories: (paths, next) ->
+        map paths, 
+            ((path, next) ->
+                if not path then throw new Error "null path"
+                Category.findByPath ds, path, (err, category) ->
+                    if err then throw err else next category
+            ), 
+            (categories) ->
+                next categories
     start()
 
 line: ->
@@ -58,7 +67,7 @@ line: ->
 main: ->
     filename: process.argv[2]
     sys.puts "Reading data from: $filename"
-    data: fs.readFileSync filename,  "utf8"
+    data: fs.readFileSync filename, "utf8"
     fixtures: JSON.parse data
     ds: redis.ds()
     sys.puts line()

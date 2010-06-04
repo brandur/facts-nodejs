@@ -1,7 +1,7 @@
 require.paths.unshift "./support/node-discount/build/default"
 require.paths.unshift "./support/redis-node-client/lib"
 
-require "../lib/util"
+require "../lib/async"
 
 fs:    require "fs"
 redis: require "../lib/redis"
