@@ -19,7 +19,7 @@ addCategories: (ds, categories, parent, next) ->
         (categories) ->
             next()
 
-addCategory: (ds, category, parent, cb) ->
+addCategory: (ds, category, parent, next) ->
     category2 = Category.make category.name
     category2.parent = parent
     category2.insert ds, (err) ->
@@ -27,9 +27,9 @@ addCategory: (ds, category, parent, cb) ->
         sys.puts "Inserted $category2.slug"
         if category.children
             addCategories ds, category.children, category2.key, ->
-                cb()
+                next()
         else
-            cb()
+            next()
 
 addFacts: (ds, facts, next) ->
     map facts, 
