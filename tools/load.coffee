@@ -11,13 +11,12 @@ Category: require("../models/category").Category
 Fact:     require("../models/fact").Fact
 
 addCategories: (ds, categories, parent, next) ->
-    map categories, 
+    forEach categories, 
         ((category, next) ->
             addCategory ds, category, parent, ->
-                next category
+                next()
         ), 
-        (categories) ->
-            next()
+        -> next()
 
 addCategory: (ds, category, parent, next) ->
     category2 = Category.make category.name
@@ -32,13 +31,12 @@ addCategory: (ds, category, parent, next) ->
             next()
 
 addFacts: (ds, facts, next) ->
-    map facts, 
+    forEach facts, 
         ((fact, next) ->
             addFact ds, fact, ->
-                next fact
+                next()
         ), 
-        (facts) ->
-            next()
+        -> next()
 
 addFact: (ds, fact, next) ->
     start: ->

@@ -36,20 +36,19 @@ main: ->
     Category.recursive ds, (err, categories) ->
         out: { categories: packCategories categories }
         Fact.all ds, (err, facts) ->
-            map facts, 
+            forEach facts, 
                 ((fact, next) ->
                     fact.loadCategories ds, (err) ->
                         if err then throw err
-                        map fact.categories, 
+                        forEach fact.categories, 
                             ((category, next) ->
                                 category.loadParentRecursively ds, (err) ->
                                     if err then throw err
-                                    next category
+                                    next()
                             ),
-                            (categories) ->
-                                next fact
+                            -> next()
                 ), 
-                (facts) ->
+                ->
                     out.facts: packFacts facts
                     #sys.puts sys.inspect out, false, null
                     fs.writeFileSync filename, JSON.stringify out, "utf8"

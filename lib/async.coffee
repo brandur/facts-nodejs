@@ -14,6 +14,14 @@ global.filter: (array, filterFunc, next) ->
                         newArray.push item
                 next newArray
 
+global.forEach: (array, forEachFunc, next) ->
+    counter: array.length
+    array.forEach (item, index) ->
+        forEachFunc item, ->
+            counter--
+            if counter <= 0
+                next()
+
 global.map: (array, mapFunc, next) ->
     counter: array.length
     newArray: new Array array.length
