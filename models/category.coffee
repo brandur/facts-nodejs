@@ -109,6 +109,12 @@ class Category
             @parent: parent
             cb null
 
+    loadParentRecursively: (ds, cb) ->
+        if not @parent then return cb null
+        @loadParent ds, (err) =>
+            if err then return cb err
+            @parent.loadParentRecursively ds, cb
+
     #
     # Serialization ----
     #

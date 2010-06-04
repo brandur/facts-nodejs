@@ -78,6 +78,17 @@ class Fact
         start()
 
     #
+    # Lazy Initialization ----
+    #
+
+    loadCategories: (ds, cb) ->
+        if @categories.length < 1 then return cb null
+        Category.findByKeys ds, @categories, errw cb, (categories) =>
+            Category.sort categories
+            @categories: categories
+            cb null
+
+    #
     # Serialization ----
     #
 
@@ -102,6 +113,18 @@ class Fact
         obj.categories: @categories
         obj.excerpt: @excerpt()
         obj
+
+    #
+    # Sets ----
+    #
+
+    @all: (ds, cb) ->
+        ds.smembers "fact:all", errw2 cb, (keys) ->
+            if not keys then return cb null, null
+            keys: k.toString() for k in keys
+            Fact.findByKeys ds, keys, errw2 cb, (facts) ->
+                Fact.sort facts
+                cb null, facts
 
     #
     # Find ----

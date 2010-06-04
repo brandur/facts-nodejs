@@ -1,4 +1,4 @@
-({
+{
     "categories": [
         { "name": "art"
         , "children": [
@@ -84,5 +84,5 @@
           ]
         }
     ]
-})
+}
 

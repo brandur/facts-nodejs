@@ -8,8 +8,6 @@ sys:   require "sys"
 Category: require("../models/category").Category
 Fact:     require("../models/fact").Fact
 
-level: 0
-
 addCategories: (ds, categories, parent, cb) ->
     category = categories.shift()
     if not category then return cb()
@@ -22,7 +20,7 @@ addCategory: (ds, category, parent, cb) ->
     category2.parent = parent
     category2.insert ds, (err) ->
         if err then throw err
-        sys.puts "inserted $category2.slug"
+        sys.puts "Inserted $category2.slug"
         if category.children
             addCategories ds, category.children, category2.key, ->
                 cb()
@@ -58,8 +56,10 @@ line: ->
     new Array(79).join("-")
 
 main: ->
-    data: fs.readFileSync "./tools/fixtures.json", "utf8"
-    fixtures: eval data
+    filename: process.argv[2]
+    sys.puts "Reading data from: $filename"
+    data: fs.readFileSync filename,  "utf8"
+    fixtures: JSON.parse data
     ds: redis.ds()
     sys.puts line()
     addCategories ds, fixtures.categories, null, ->
@@ -68,6 +68,7 @@ main: ->
             sys.puts line()
             sys.puts "DONE!"
             sys.puts line()
+            ds.close()
             process.exit()
 
 main()
